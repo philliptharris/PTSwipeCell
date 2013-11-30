@@ -30,6 +30,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 @property (nonatomic, strong) NSDate *lastPanTime;
 
+@property (nonatomic, assign) CGRect homeFrm;
+
 @end
 
 @implementation PTSwipeCell
@@ -90,6 +92,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.elasticity = 0.3;
     
     [self.contentView addObserver:self forKeyPath:@"frame" options:0 context:NULL];
+    
+    _homeFrm = CGRectZero;
 }
 
 - (void)dealloc {
@@ -150,6 +154,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator {
     [self.dynamicAnimator removeAllBehaviors];
+    
+    self.contentView.frame = self.homeFrm;
 }
 
 //===============================================
@@ -191,11 +197,18 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (void)handlePanGestureRecognizer:(UIPanGestureRecognizer *)gesture {
     
-    // We can't really use velocityInView because the gesture recognizer doesn't update the value for Ended or Cancelled. It just gives you the previous value, even if you hold your finger down without moving for a long time.
+    // We can't really use velocityInView because the gesture recognizer doesn't update the value upon Ended or Cancelled. It just gives you the previous value, even if you hold your finger down without moving for a long time.
 //    CGFloat panGestureVelocityInViewX = [gesture velocityInView:self].x;
 //    NSLog(@"panGestureVelocityInViewX = %f", panGestureVelocityInViewX);
     
     [self.dynamicAnimator removeAllBehaviors];
+    
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        if (CGRectGetWidth(self.homeFrm) < 1.0) {
+            self.homeFrm = self.contentView.frame;
+            NSLog(@"%@", NSStringFromCGRect(self.homeFrm));
+        }
+    }
     
     static CGFloat lastDeltaX;
     
@@ -218,8 +231,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     if (gesture.state == UIGestureRecognizerStateChanged) {
         lastDeltaX = translation.x;
     }
-    
-    if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
+    else if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
         
         CGFloat panVelocityX = lastDeltaX / (-1.0 * [self.lastPanTime timeIntervalSinceNow]);
         panVelocityX = MIN(10000.0, panVelocityX);
@@ -280,6 +292,19 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         }
     }
     return self.defaultColor;
+}
+
+- (NSString *)currentImageName {
+    
+    if (_index) {
+        if (_direction == PTSwipeCellDirectionLeft) {
+            return [self.leftImageNames objectAtIndex:[_index integerValue]];
+        }
+        else if (_direction == PTSwipeCellDirectionRight) {
+            return [self.rightImageNames objectAtIndex:[_index integerValue]];
+        }
+    }
+    return nil;
 }
 
 - (NSNumber *)currentTriggeredIndex {

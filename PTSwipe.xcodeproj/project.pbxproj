@@ -22,6 +22,9 @@
 		F4964FC41848E4F8005C847D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4964FA31848E4F8005C847D /* UIKit.framework */; };
 		F4964FCC1848E4F8005C847D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F4964FCA1848E4F8005C847D /* InfoPlist.strings */; };
 		F4964FCE1848E4F8005C847D /* PTSwipeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FCD1848E4F8005C847D /* PTSwipeTests.m */; };
+		F4964FD91848E543005C847D /* MyTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FD81848E543005C847D /* MyTableViewController.m */; };
+		F4964FDC1848E5F1005C847D /* PTSwipeCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FDB1848E5F1005C847D /* PTSwipeCell.m */; };
+		F4964FDF1848EC3E005C847D /* PTSwipeItem.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FDE1848EC3E005C847D /* PTSwipeItem.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +58,12 @@
 		F4964FC91848E4F8005C847D /* PTSwipeTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PTSwipeTests-Info.plist"; sourceTree = "<group>"; };
 		F4964FCB1848E4F8005C847D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F4964FCD1848E4F8005C847D /* PTSwipeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTSwipeTests.m; sourceTree = "<group>"; };
+		F4964FD71848E543005C847D /* MyTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyTableViewController.h; sourceTree = "<group>"; };
+		F4964FD81848E543005C847D /* MyTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyTableViewController.m; sourceTree = "<group>"; };
+		F4964FDA1848E5F1005C847D /* PTSwipeCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTSwipeCell.h; sourceTree = "<group>"; };
+		F4964FDB1848E5F1005C847D /* PTSwipeCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTSwipeCell.m; sourceTree = "<group>"; };
+		F4964FDD1848EC3E005C847D /* PTSwipeItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTSwipeItem.h; sourceTree = "<group>"; };
+		F4964FDE1848EC3E005C847D /* PTSwipeItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTSwipeItem.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,8 +127,14 @@
 				F4964FAF1848E4F8005C847D /* AppDelegate.m */,
 				F4964FB11848E4F8005C847D /* Main_iPhone.storyboard */,
 				F4964FB41848E4F8005C847D /* Main_iPad.storyboard */,
+				F4964FD71848E543005C847D /* MyTableViewController.h */,
+				F4964FD81848E543005C847D /* MyTableViewController.m */,
 				F4964FB71848E4F8005C847D /* ViewController.h */,
 				F4964FB81848E4F8005C847D /* ViewController.m */,
+				F4964FDA1848E5F1005C847D /* PTSwipeCell.h */,
+				F4964FDB1848E5F1005C847D /* PTSwipeCell.m */,
+				F4964FDD1848EC3E005C847D /* PTSwipeItem.h */,
+				F4964FDE1848EC3E005C847D /* PTSwipeItem.m */,
 				F4964FBA1848E4F8005C847D /* Images.xcassets */,
 				F4964FA61848E4F8005C847D /* Supporting Files */,
 			);
@@ -254,8 +269,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4964FB91848E4F8005C847D /* ViewController.m in Sources */,
+				F4964FDF1848EC3E005C847D /* PTSwipeItem.m in Sources */,
 				F4964FB01848E4F8005C847D /* AppDelegate.m in Sources */,
 				F4964FAC1848E4F8005C847D /* main.m in Sources */,
+				F4964FD91848E543005C847D /* MyTableViewController.m in Sources */,
+				F4964FDC1848E5F1005C847D /* PTSwipeCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

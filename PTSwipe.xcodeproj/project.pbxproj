@@ -127,6 +127,7 @@
 				F4964FAF1848E4F8005C847D /* AppDelegate.m */,
 				F4964FB11848E4F8005C847D /* Main_iPhone.storyboard */,
 				F4964FB41848E4F8005C847D /* Main_iPad.storyboard */,
+				F4964FBA1848E4F8005C847D /* Images.xcassets */,
 				F4964FD71848E543005C847D /* MyTableViewController.h */,
 				F4964FD81848E543005C847D /* MyTableViewController.m */,
 				F4964FB71848E4F8005C847D /* ViewController.h */,
@@ -135,7 +136,6 @@
 				F4964FDB1848E5F1005C847D /* PTSwipeCell.m */,
 				F4964FDD1848EC3E005C847D /* PTSwipeItem.h */,
 				F4964FDE1848EC3E005C847D /* PTSwipeItem.m */,
-				F4964FBA1848E4F8005C847D /* Images.xcassets */,
 				F4964FA61848E4F8005C847D /* Supporting Files */,
 			);
 			path = PTSwipe;
@@ -492,6 +492,7 @@
 				F4964FD31848E4F8005C847D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F4964FD41848E4F8005C847D /* Build configuration list for PBXNativeTarget "PTSwipeTests" */ = {
 			isa = XCConfigurationList;
@@ -500,6 +501,7 @@
 				F4964FD61848E4F8005C847D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

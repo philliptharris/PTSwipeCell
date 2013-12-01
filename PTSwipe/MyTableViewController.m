@@ -45,9 +45,11 @@
     
     cell.leftTriggerRatios = @[@0.2, @0.4];
     cell.leftColors = @[[UIColor blueColor], [UIColor greenColor]];
+    cell.leftImageNames = @[@"check", @"cross"];
     
     cell.rightTriggerRatios = @[@0.5, @0.75];
     cell.rightColors = @[[UIColor orangeColor], [UIColor yellowColor]];
+    cell.rightImageNames = @[@"pencil", @"plus"];
     
     cell.textLabel.text = [NSString stringWithFormat:@"%li", (long)indexPath.row];
     

@@ -15,6 +15,7 @@ NSString * const MSDynamicsDrawerBoundaryIdentifier = @"MSDynamicsDrawerBoundary
 const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 @interface PTSwipeCell () <UIDynamicAnimatorDelegate>
+
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
 @property (nonatomic, strong) UIView *colorIndicatorView;
 @property (nonatomic, strong) UIImageView *slidingImageView;
@@ -91,13 +92,10 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.gravityMagnitude = 3.0;
     self.elasticity = 0.3;
     
-    [self.contentView addObserver:self forKeyPath:@"frame" options:0 context:NULL];
-    
     _homeFrm = CGRectZero;
-}
-
-- (void)dealloc {
-    [self.contentView removeObserver:self forKeyPath:@"frame"];
+    
+    _slidingImageView.layer.borderColor = [UIColor blackColor].CGColor;
+    _slidingImageView.layer.borderWidth = 1.0;
 }
 
 //===============================================
@@ -160,24 +158,6 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 //===============================================
 #pragma mark -
-#pragma mark NSKeyValueObserving
-//===============================================
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    
-    if([keyPath isEqualToString:@"frame"] && (object == self.contentView)) {
-        if([object valueForKeyPath:keyPath] != [NSNull null]) {
-            [self contentViewDidUpdateFrame];
-        }
-    }
-}
-
-- (void)contentViewDidUpdateFrame {
-    NSLog(@"observed");
-}
-
-//===============================================
-#pragma mark -
 #pragma mark UIPanGestureRecognizer
 //===============================================
 
@@ -203,6 +183,9 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     [self.dynamicAnimator removeAllBehaviors];
     
+    //
+    // There's a weird behavior where the contentView ends up 1/2 a pixel lower than it should be while it is animating. At the end of the animation, let's move it back to its "home" frame.
+    //
     if (gesture.state == UIGestureRecognizerStateBegan) {
         if (CGRectGetWidth(self.homeFrm) < 1.0) {
             self.homeFrm = self.contentView.frame;
@@ -214,20 +197,17 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     CGPoint translation = [gesture translationInView:self];
     
-    CGRect frm = self.contentView.frame;
-    CGFloat xPoint = CGRectGetMinX(frm) + translation.x;
-    CGFloat maxX = CGRectGetWidth(self.contentView.bounds);
-    CGFloat minX = -1.0 * maxX;
-    if (xPoint > maxX) xPoint = maxX;
-    if (xPoint < minX) xPoint = minX;
-    frm.origin.x = xPoint;
-    self.contentView.frame = frm;
+    [self translateContentViewAlongXaxis:translation.x];
     
     _index = [self currentTriggeredIndex];
     
+    [self updateSliderImage];
+    
     self.colorIndicatorView.backgroundColor = [self currentColor];
     
+    //
     // When state is Ended or Cancelled, translationInView always returns CGPointZero. Therefore only cache the delta X if the state is Changed.
+    //
     if (gesture.state == UIGestureRecognizerStateChanged) {
         lastDeltaX = translation.x;
     }
@@ -247,6 +227,38 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     [gesture setTranslation:CGPointZero inView:self];
     self.lastPanTime = [NSDate date];
+}
+
+- (void)translateContentViewAlongXaxis:(CGFloat)translationX {
+    
+    CGRect frm = self.contentView.frame;
+    CGFloat newX = CGRectGetMinX(frm) + translationX;
+    CGFloat maxX = CGRectGetWidth(self.contentView.bounds);
+    CGFloat minX = -1.0 * maxX;
+    if (newX > maxX) newX = maxX;
+    if (newX < minX) newX = minX;
+    frm.origin.x = newX;
+    self.contentView.frame = frm;
+}
+
+- (void)updateSliderImage {
+    
+    NSString *imageName = [self currentImageName];
+    
+    [self.slidingImageView setImage:[UIImage imageNamed:imageName]];
+    
+    CGRect frm = self.slidingImageView.frame;
+    frm.size = CGSizeMake(50.0, 50.0);
+    frm.origin.y = (CGRectGetHeight(self.bounds) - CGRectGetHeight(frm)) / 2.0;
+    
+    if (self.direction == PTSwipeCellDirectionLeft) {
+        frm.origin.x = CGRectGetMaxX(self.contentView.frame);
+    }
+    else if (self.direction == PTSwipeCellDirectionRight) {
+        frm.origin.x = CGRectGetMinX(self.contentView.frame) - CGRectGetWidth(frm);
+    }
+    
+    self.slidingImageView.frame = frm;
 }
 
 //===============================================
@@ -296,12 +308,12 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (NSString *)currentImageName {
     
-    if (_index) {
+    if (self.index) {
         if (_direction == PTSwipeCellDirectionLeft) {
-            return [self.leftImageNames objectAtIndex:[_index integerValue]];
+            return [self.leftImageNames objectAtIndex:[self.index integerValue]];
         }
         else if (_direction == PTSwipeCellDirectionRight) {
-            return [self.rightImageNames objectAtIndex:[_index integerValue]];
+            return [self.rightImageNames objectAtIndex:[self.index integerValue]];
         }
     }
     return nil;
@@ -338,6 +350,28 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         return nil;
     }
     return [NSNumber numberWithInteger:triggered];
+}
+
+- (NSNumber *)currentDisplayIndex {
+    
+    NSNumber *currentTriggeredIndex = [self currentTriggeredIndex];
+    
+    if (currentTriggeredIndex) {
+        return currentTriggeredIndex;
+    }
+    else {
+        if (self.direction == PTSwipeCellDirectionLeft) {
+            if ([self.leftTriggerRatios count] > 0) {
+                return @0;
+            }
+        }
+        else if (self.direction == PTSwipeCellDirectionRight) {
+            if ([self.rightTriggerRatios count] > 0) {
+                return @0;
+            }
+        }
+    }
+    return nil;
 }
 
 //===============================================
@@ -387,5 +421,27 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     }
     return [NSNumber numberWithInteger:triggered];
 }
+
+//===============================================
+#pragma mark -
+#pragma mark NSKeyValueObserving
+//===============================================
+//
+// I tried using KeyValueObserving to get callbacks on the contentView's position as it is being animated by UIKit Dynamics, but that doesn't happen.
+//
+//- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+//    
+//    if([keyPath isEqualToString:@"frame"] && (object == self.contentView)) {
+//        if([object valueForKeyPath:keyPath] != [NSNull null]) {
+//            [self contentViewDidUpdateFrame];
+//        }
+//    }
+//}
+//- (void)contentViewDidUpdateFrame {
+//    NSLog(@"observed");
+//}
+//- (void)dealloc {
+//    [self.contentView removeObserver:self forKeyPath:@"frame"];
+//}
 
 @end

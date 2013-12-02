@@ -19,7 +19,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
 @property (nonatomic, strong) UIView *colorIndicatorView;
 @property (nonatomic, strong) UIImageView *slidingImageView;
-@property (nonatomic, assign) PTSwipeCellDirection direction;
+@property (nonatomic, assign) PTSwipeCellSide revealedSide;
 @property (nonatomic, strong) NSNumber *index;
 @property (nonatomic, strong) NSString *imageName;
 
@@ -103,7 +103,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark Dynamic Animator
 //===============================================
 
-- (void)dynamicDudeWithPanVelocityX:(CGFloat)velocityX {
+- (void)beginDynamicAnimationWithPanVelocityX:(CGFloat)velocityX {
     
     [self.boundaryCollisionBehavior removeAllBoundaries];
     [self.boundaryCollisionBehavior addBoundaryWithIdentifier:MSDynamicsDrawerBoundaryIdentifier forPath:[self boundaryPathForState]];
@@ -123,6 +123,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 //    snapBehavior.damping = 0.2;
 //    [self.dynamicAnimator addBehavior:snapBehavior];
     
+    // If we give the item some initial velocity, we don't need to use the UIPushBehavior.
 //    CGFloat pushMagnitude = fabsf(velocityX) * MSPaneViewVelocityMultiplier;
 //    self.pushBehaviorInstantaneous.angle = velocityX > 0.0 ? 0.0 : M_PI;
 //    self.pushBehaviorInstantaneous.magnitude = pushMagnitude;
@@ -137,12 +138,12 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     boundary.origin.y = -1.0;
     boundary.size.height = (CGRectGetHeight(self.bounds) + 1.0);
     boundary.size.width = ((CGRectGetWidth(self.contentView.bounds) * 2.0) + 2.0);
-    boundary.origin.x = (_direction == PTSwipeCellDirectionLeft) ? -1.0 * CGRectGetWidth(self.contentView.bounds) - 1.0 : -1.0;
+    boundary.origin.x = (self.revealedSide == PTSwipeCellSideRight) ? -1.0 * CGRectGetWidth(self.contentView.bounds) - 1.0 : -1.0;
     return [UIBezierPath bezierPathWithRect:boundary];
 }
 
 - (CGFloat)gravityAngleForState {
-    return (_direction == PTSwipeCellDirectionLeft) ? 0.0 : M_PI;
+    return (self.revealedSide == PTSwipeCellSideRight) ? 0.0 : M_PI;
 }
 
 //===============================================
@@ -151,6 +152,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 //===============================================
 
 - (void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator {
+    
     [self.dynamicAnimator removeAllBehaviors];
     
     self.contentView.frame = self.homeFrm;
@@ -184,13 +186,14 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     [self.dynamicAnimator removeAllBehaviors];
     
     //
-    // There's a weird behavior where the contentView ends up 1/2 a pixel lower than it should be while it is animating. At the end of the animation, let's move it back to its "home" frame.
+    // There's a weird behavior where the contentView ends up 1/2 a pixel lower than it should be while it is animating. At the end of the animation, let's move it back to its "home" frame. homeFrm starts off as CGRectZero, and it gets set here when the very first pan gesture begins.
     //
     if (gesture.state == UIGestureRecognizerStateBegan) {
         if (CGRectGetWidth(self.homeFrm) < 1.0) {
             self.homeFrm = self.contentView.frame;
             NSLog(@"%@", NSStringFromCGRect(self.homeFrm));
         }
+        NSLog(@"began with translation %f", [gesture translationInView:self].x);
     }
     
     static CGFloat lastDeltaX;
@@ -216,7 +219,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         CGFloat panVelocityX = lastDeltaX / (-1.0 * [self.lastPanTime timeIntervalSinceNow]);
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
-        [self dynamicDudeWithPanVelocityX:panVelocityX];
+        [self beginDynamicAnimationWithPanVelocityX:panVelocityX];
         
         if (_index) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didExecuteItemAtIndex:)]) {
@@ -251,11 +254,17 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     frm.size = CGSizeMake(50.0, 50.0);
     frm.origin.y = (CGRectGetHeight(self.bounds) - CGRectGetHeight(frm)) / 2.0;
     
-    if (self.direction == PTSwipeCellDirectionLeft) {
-        frm.origin.x = CGRectGetMaxX(self.contentView.frame);
+    if (self.revealedSide == PTSwipeCellSideRight) {
+        CGFloat xPoint = CGRectGetMaxX(self.contentView.frame);
+        CGFloat maxX = CGRectGetWidth(self.bounds) - CGRectGetWidth(frm);
+        if (xPoint > maxX) xPoint = maxX;
+        frm.origin.x = xPoint;
     }
-    else if (self.direction == PTSwipeCellDirectionRight) {
-        frm.origin.x = CGRectGetMinX(self.contentView.frame) - CGRectGetWidth(frm);
+    else if (self.revealedSide == PTSwipeCellSideLeft) {
+        CGFloat xPoint = CGRectGetMinX(self.contentView.frame) - CGRectGetWidth(frm);
+        CGFloat minX = 0.0;
+        if (xPoint < minX) xPoint = minX;
+        frm.origin.x = xPoint;
     }
     
     self.slidingImageView.frame = frm;
@@ -266,17 +275,17 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark Helpers
 //===============================================
 
-- (PTSwipeCellDirection)currentDirection {
+- (PTSwipeCellSide)currentRevealedSide {
     
     CGFloat xPoint = CGRectGetMinX(self.contentView.frame);
-    if (xPoint < 0) {
-        return PTSwipeCellDirectionLeft;
+    if (xPoint < 0.0) {
+        return PTSwipeCellSideRight;
     }
-    else if (xPoint > 0) {
-        return PTSwipeCellDirectionRight;
+    else if (xPoint > 0.0) {
+        return PTSwipeCellSideLeft;
     }
     else {
-        return PTSwipeCellDirectionCenter;
+        return PTSwipeCellSideCenter;
     }
 }
 
@@ -296,10 +305,10 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 - (UIColor *)currentColor {
     
     if (_index) {
-        if (_direction == PTSwipeCellDirectionLeft) {
+        if (self.revealedSide == PTSwipeCellSideLeft) {
             return [self.leftColors objectAtIndex:[_index integerValue]];
         }
-        else if (_direction == PTSwipeCellDirectionRight) {
+        else if (self.revealedSide == PTSwipeCellSideRight) {
             return [self.rightColors objectAtIndex:[_index integerValue]];
         }
     }
@@ -308,12 +317,14 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (NSString *)currentImageName {
     
-    if (self.index) {
-        if (_direction == PTSwipeCellDirectionLeft) {
-            return [self.leftImageNames objectAtIndex:[self.index integerValue]];
+    NSNumber *currentDisplayIndex = [self currentDisplayIndex];
+    
+    if (currentDisplayIndex) {
+        if (self.revealedSide == PTSwipeCellSideLeft) {
+            return [self.leftImageNames objectAtIndex:[currentDisplayIndex integerValue]];
         }
-        else if (_direction == PTSwipeCellDirectionRight) {
-            return [self.rightImageNames objectAtIndex:[self.index integerValue]];
+        else if (self.revealedSide == PTSwipeCellSideRight) {
+            return [self.rightImageNames objectAtIndex:[currentDisplayIndex integerValue]];
         }
     }
     return nil;
@@ -321,11 +332,11 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (NSNumber *)currentTriggeredIndex {
     
-    _direction = [self currentDirection];
+    _revealedSide = [self currentRevealedSide];
     
     __block NSInteger triggered = -1;
     
-    if (_direction == PTSwipeCellDirectionLeft) {
+    if (self.revealedSide == PTSwipeCellSideLeft) {
         CGFloat ratio = [self currentRatio];
         [self.leftTriggerRatios enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             CGFloat triggerRatio = [obj floatValue];
@@ -335,7 +346,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
             }
         }];
     }
-    else if (_direction == PTSwipeCellDirectionRight) {
+    else if (self.revealedSide == PTSwipeCellSideRight) {
         CGFloat ratio = [self currentRatio];
         [self.rightTriggerRatios enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             CGFloat triggerRatio = [obj floatValue];
@@ -360,12 +371,12 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         return currentTriggeredIndex;
     }
     else {
-        if (self.direction == PTSwipeCellDirectionLeft) {
+        if (self.revealedSide == PTSwipeCellSideLeft) {
             if ([self.leftTriggerRatios count] > 0) {
                 return @0;
             }
         }
-        else if (self.direction == PTSwipeCellDirectionRight) {
+        else if (self.revealedSide == PTSwipeCellSideRight) {
             if ([self.rightTriggerRatios count] > 0) {
                 return @0;
             }

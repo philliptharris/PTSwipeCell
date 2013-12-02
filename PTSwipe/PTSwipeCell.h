@@ -8,10 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
-typedef NS_ENUM(NSInteger, PTSwipeCellDirection) {
-    PTSwipeCellDirectionLeft,
-    PTSwipeCellDirectionCenter,
-    PTSwipeCellDirectionRight
+typedef NS_ENUM(NSInteger, PTSwipeCellSide) {
+    PTSwipeCellSideLeft,
+    PTSwipeCellSideCenter,
+    PTSwipeCellSideRight
 };
 
 extern NSString * const PTSwipeCellId;
@@ -28,14 +28,18 @@ extern NSString * const PTSwipeCellId;
 @property (nonatomic, strong) NSArray *leftColors;
 @property (nonatomic, strong) NSArray *leftImageNames;
 @property (nonatomic, strong) NSArray *leftTriggerRatios;
+@property (nonatomic, strong) NSArray *leftTriggerPoints;
 
 @property (nonatomic, strong) NSArray *rightColors;
 @property (nonatomic, strong) NSArray *rightImageNames;
 @property (nonatomic, strong) NSArray *rightTriggerRatios;
+@property (nonatomic, strong) NSArray *rightTriggerPoints;
 
+// Experimental
 @property (nonatomic, strong) NSArray *colors;
 @property (nonatomic, strong) NSArray *imageNames;
 @property (nonatomic, strong) NSArray *triggerRatios;
+//
 
 ///-------------------------------------
 /// @name Configuring Dynamics Behaviors

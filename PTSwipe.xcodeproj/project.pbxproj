@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		11AB3534184CED5B004A7F8D /* UIColor+LightDark.m in Sources */ = {isa = PBXBuildFile; fileRef = 11AB3533184CED5B004A7F8D /* UIColor+LightDark.m */; };
 		F4964FA01848E4F8005C847D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4964F9F1848E4F8005C847D /* Foundation.framework */; };
 		F4964FA21848E4F8005C847D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4964FA11848E4F8005C847D /* CoreGraphics.framework */; };
 		F4964FA41848E4F8005C847D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4964FA31848E4F8005C847D /* UIKit.framework */; };
@@ -37,6 +38,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		11AB3532184CED5B004A7F8D /* UIColor+LightDark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+LightDark.h"; sourceTree = "<group>"; };
+		11AB3533184CED5B004A7F8D /* UIColor+LightDark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+LightDark.m"; sourceTree = "<group>"; };
 		F4964F9C1848E4F8005C847D /* PTSwipe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PTSwipe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4964F9F1848E4F8005C847D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F4964FA11848E4F8005C847D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -131,6 +134,8 @@
 				F4964FDB1848E5F1005C847D /* PTSwipeCell.m */,
 				F4964FDD1848EC3E005C847D /* PTSwipeItem.h */,
 				F4964FDE1848EC3E005C847D /* PTSwipeItem.m */,
+				11AB3532184CED5B004A7F8D /* UIColor+LightDark.h */,
+				11AB3533184CED5B004A7F8D /* UIColor+LightDark.m */,
 				F4964FA61848E4F8005C847D /* Supporting Files */,
 			);
 			path = PTSwipe;
@@ -267,6 +272,7 @@
 				F4964FB01848E4F8005C847D /* AppDelegate.m in Sources */,
 				F4964FAC1848E4F8005C847D /* main.m in Sources */,
 				F4964FD91848E543005C847D /* MyTableViewController.m in Sources */,
+				11AB3534184CED5B004A7F8D /* UIColor+LightDark.m in Sources */,
 				F4964FDC1848E5F1005C847D /* PTSwipeCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -404,10 +410,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PTSwipe/PTSwipe-Prefix.pch";
 				INFOPLIST_FILE = "PTSwipe/PTSwipe-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "DFBE45D2-C11E-46AA-97D6-7F867868C70F";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -417,10 +425,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PTSwipe/PTSwipe-Prefix.pch";
 				INFOPLIST_FILE = "PTSwipe/PTSwipe-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "DFBE45D2-C11E-46AA-97D6-7F867868C70F";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

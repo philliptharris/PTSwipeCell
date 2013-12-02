@@ -20,8 +20,9 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 @property (nonatomic, strong) UIView *colorIndicatorView;
 @property (nonatomic, strong) UIImageView *slidingImageView;
 @property (nonatomic, assign) PTSwipeCellSide revealedSide;
-@property (nonatomic, strong) NSNumber *index;
-@property (nonatomic, strong) NSString *imageName;
+@property (nonatomic, assign, getter = isDragging) BOOL dragging;
+@property (nonatomic, assign) NSInteger draggingIndex;
+@property (nonatomic, assign) NSInteger imageIndex;
 
 @property (nonatomic, strong) UIDynamicAnimator *dynamicAnimator;
 @property (nonatomic, strong) UIPushBehavior *pushBehaviorInstantaneous;
@@ -36,6 +37,55 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 @end
 
 @implementation PTSwipeCell
+
+//===============================================
+#pragma mark -
+#pragma mark Setters
+//===============================================
+
+//- (void)setDisplayIndex:(NSNumber *)displayIndex {
+//
+//    if (_displayIndex != displayIndex) {
+//        if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipeTo:onSide:)]) {
+//            [self.delegate swipeCell:self didSwipeTo:(displayIndex ? [displayIndex integerValue] : -1) onSide:self.revealedSide];
+//        }
+//    }
+//    _displayIndex = displayIndex;
+//}
+
+- (void)setDraggingIndex:(NSInteger)draggingIndex {
+    
+    if (_draggingIndex != draggingIndex) {
+        if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipeTo:onSide:)]) {
+            [self.delegate swipeCell:self didSwipeTo:draggingIndex onSide:self.revealedSide];
+        }
+    }
+    _draggingIndex = draggingIndex;
+}
+
+- (void)setImageIndex:(NSInteger)imageIndex {
+    
+    if (_imageIndex != imageIndex) {
+        
+        NSString *imageName = [self imageNameForIndex:imageIndex onSide:self.revealedSide];
+        self.slidingImageView.image = imageName ? [UIImage imageNamed:imageName] : nil;
+        
+        NSLog(@"setting image to %@", imageName);
+    }
+    _imageIndex = imageIndex;
+}
+
+- (void)setRevealedSide:(PTSwipeCellSide)revealedSide {
+    
+    if (_revealedSide != revealedSide) {
+        
+        NSString *imageName = [self imageNameForIndex:self.imageIndex onSide:revealedSide];
+        self.slidingImageView.image = imageName ? [UIImage imageNamed:imageName] : nil;
+        
+        NSLog(@"setting image to %@", imageName);
+    }
+    _revealedSide = revealedSide;
+}
 
 //===============================================
 #pragma mark -
@@ -66,7 +116,12 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (void)initializer {
     
-    _defaultColor = [UIColor purpleColor];
+    _dragging = NO;
+    _draggingIndex = -1;
+    _imageIndex = -1;
+    _sliderShouldSlide = YES;
+    
+    _defaultColor = [UIColor lightGrayColor];
     
     _colorIndicatorView = [[UIView alloc] initWithFrame:self.bounds];
     _colorIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -94,8 +149,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     _homeFrm = CGRectZero;
     
-    _slidingImageView.layer.borderColor = [UIColor blackColor].CGColor;
-    _slidingImageView.layer.borderWidth = 1.0;
+//    _slidingImageView.layer.borderColor = [UIColor blackColor].CGColor;
+//    _slidingImageView.layer.borderWidth = 1.0;
 }
 
 //===============================================
@@ -114,7 +169,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     [self.dynamicAnimator addBehavior:self.gravityBehavior];
     
     [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX / 5.0, 0.0) forItem:self.contentView];
-    self.elasticityBehavior.elasticity = _elasticity;
+    self.elasticityBehavior.elasticity = self.elasticity;
     self.elasticityBehavior.allowsRotation = NO;
     [self.dynamicAnimator addBehavior:self.elasticityBehavior];
     
@@ -155,7 +210,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     [self.dynamicAnimator removeAllBehaviors];
     
-    self.contentView.frame = self.homeFrm;
+    // It turns out that we don't want to do this. If the user starts panning the cell in the middle of a dynamic animation, this will cause the contentView to jump back to zero. We want the contentView to stay where it is.
+//    self.contentView.frame = self.homeFrm;
 }
 
 //===============================================
@@ -189,22 +245,39 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     // There's a weird behavior where the contentView ends up 1/2 a pixel lower than it should be while it is animating. At the end of the animation, let's move it back to its "home" frame. homeFrm starts off as CGRectZero, and it gets set here when the very first pan gesture begins.
     //
     if (gesture.state == UIGestureRecognizerStateBegan) {
+        
+        self.dragging = YES;
+        
         if (CGRectGetWidth(self.homeFrm) < 1.0) {
             self.homeFrm = self.contentView.frame;
-            NSLog(@"%@", NSStringFromCGRect(self.homeFrm));
+//            NSLog(@"%@", NSStringFromCGRect(self.homeFrm));
         }
         NSLog(@"began with translation %f", [gesture translationInView:self].x);
     }
     
-    static CGFloat lastDeltaX;
+    static CGFloat lastDeltaX_forVelocityCalculation;
     
     CGPoint translation = [gesture translationInView:self];
     
     [self translateContentViewAlongXaxis:translation.x];
     
-    _index = [self currentTriggeredIndex];
+    self.revealedSide = [self currentRevealedSide];
     
-    [self updateSliderImage];
+    self.draggingIndex = [self currentDraggingIndex];
+    
+    self.imageIndex = [self currentImageIndex];
+//    BOOL displayIndexHasChanged = NO;
+//    NSNumber *currentIndex = [self currentDisplayIndex];
+//    if (self.displayIndex && currentIndex) {
+//        if ([self.displayIndex integerValue] != [currentIndex integerValue]) {
+//            displayIndexHasChanged = YES;
+//        }
+//    }
+//    else if (self.displayIndex != currentIndex) {
+//        displayIndexHasChanged = YES;
+//    }
+    
+    [self updateSliderFrame];
     
     self.colorIndicatorView.backgroundColor = [self currentColor];
     
@@ -212,18 +285,20 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     // When state is Ended or Cancelled, translationInView always returns CGPointZero. Therefore only cache the delta X if the state is Changed.
     //
     if (gesture.state == UIGestureRecognizerStateChanged) {
-        lastDeltaX = translation.x;
+        lastDeltaX_forVelocityCalculation = translation.x;
     }
     else if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
         
-        CGFloat panVelocityX = lastDeltaX / (-1.0 * [self.lastPanTime timeIntervalSinceNow]);
+        self.dragging = NO;
+        
+        CGFloat panVelocityX = lastDeltaX_forVelocityCalculation / (-1.0 * [self.lastPanTime timeIntervalSinceNow]);
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
         [self beginDynamicAnimationWithPanVelocityX:panVelocityX];
         
-        if (_index) {
-            if ([self.delegate respondsToSelector:@selector(swipeCell:didExecuteItemAtIndex:)]) {
-                [self.delegate swipeCell:self didExecuteItemAtIndex:[_index integerValue]];
+        if (self.draggingIndex != -1) {
+            if ([self.delegate respondsToSelector:@selector(swipeCell:didReleaseAt:onSide:)]) {
+                [self.delegate swipeCell:self didReleaseAt:self.draggingIndex onSide:self.revealedSide];
             }
         }
     }
@@ -244,11 +319,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.contentView.frame = frm;
 }
 
-- (void)updateSliderImage {
-    
-    NSString *imageName = [self currentImageName];
-    
-    [self.slidingImageView setImage:[UIImage imageNamed:imageName]];
+- (void)updateSliderFrame {
     
     CGRect frm = self.slidingImageView.frame;
     frm.size = CGSizeMake(50.0, 50.0);
@@ -257,13 +328,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     if (self.revealedSide == PTSwipeCellSideRight) {
         CGFloat xPoint = CGRectGetMaxX(self.contentView.frame);
         CGFloat maxX = CGRectGetWidth(self.bounds) - CGRectGetWidth(frm);
-        if (xPoint > maxX) xPoint = maxX;
+        if (xPoint > maxX || !self.sliderShouldSlide) xPoint = maxX;
         frm.origin.x = xPoint;
     }
     else if (self.revealedSide == PTSwipeCellSideLeft) {
         CGFloat xPoint = CGRectGetMinX(self.contentView.frame) - CGRectGetWidth(frm);
         CGFloat minX = 0.0;
-        if (xPoint < minX) xPoint = minX;
+        if (xPoint < minX || !self.sliderShouldSlide) xPoint = minX;
         frm.origin.x = xPoint;
     }
     
@@ -304,44 +375,40 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (UIColor *)currentColor {
     
-    if (_index) {
+    if (self.draggingIndex != -1) {
         if (self.revealedSide == PTSwipeCellSideLeft) {
-            return [self.leftColors objectAtIndex:[_index integerValue]];
+            return [self.leftColors objectAtIndex:self.draggingIndex];
         }
         else if (self.revealedSide == PTSwipeCellSideRight) {
-            return [self.rightColors objectAtIndex:[_index integerValue]];
+            return [self.rightColors objectAtIndex:self.draggingIndex];
         }
     }
     return self.defaultColor;
 }
 
-- (NSString *)currentImageName {
+- (NSString *)imageNameForIndex:(NSInteger)index onSide:(PTSwipeCellSide)side {
     
-    NSNumber *currentDisplayIndex = [self currentDisplayIndex];
-    
-    if (currentDisplayIndex) {
-        if (self.revealedSide == PTSwipeCellSideLeft) {
-            return [self.leftImageNames objectAtIndex:[currentDisplayIndex integerValue]];
+    if (index >= 0) {
+        if (side == PTSwipeCellSideLeft) {
+            return [self.leftImageNames objectAtIndex:index];
         }
-        else if (self.revealedSide == PTSwipeCellSideRight) {
-            return [self.rightImageNames objectAtIndex:[currentDisplayIndex integerValue]];
+        else if (side == PTSwipeCellSideRight) {
+            return [self.rightImageNames objectAtIndex:index];
         }
     }
     return nil;
 }
 
-- (NSNumber *)currentTriggeredIndex {
+- (NSInteger)currentDraggingIndex {
     
-    _revealedSide = [self currentRevealedSide];
-    
-    __block NSInteger triggered = -1;
+    __block NSInteger draggingIndex = -1;
     
     if (self.revealedSide == PTSwipeCellSideLeft) {
         CGFloat ratio = [self currentRatio];
         [self.leftTriggerRatios enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             CGFloat triggerRatio = [obj floatValue];
             if (ratio >= triggerRatio) {
-                triggered = idx;
+                draggingIndex = idx;
                 *stop = YES;
             }
         }];
@@ -351,86 +418,34 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         [self.rightTriggerRatios enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             CGFloat triggerRatio = [obj floatValue];
             if (ratio >= triggerRatio) {
-                triggered = idx;
+                draggingIndex = idx;
                 *stop = YES;
             }
         }];
     }
-    
-    if (triggered < 0) {
-        return nil;
-    }
-    return [NSNumber numberWithInteger:triggered];
+    return draggingIndex;
 }
 
-- (NSNumber *)currentDisplayIndex {
+- (NSInteger)currentImageIndex {
     
-    NSNumber *currentTriggeredIndex = [self currentTriggeredIndex];
+    NSInteger currentTriggeredIndex = [self currentDraggingIndex];
     
-    if (currentTriggeredIndex) {
+    if (currentTriggeredIndex != -1) {
         return currentTriggeredIndex;
     }
     else {
         if (self.revealedSide == PTSwipeCellSideLeft) {
             if ([self.leftTriggerRatios count] > 0) {
-                return @0;
+                return 0;
             }
         }
         else if (self.revealedSide == PTSwipeCellSideRight) {
             if ([self.rightTriggerRatios count] > 0) {
-                return @0;
+                return 0;
             }
         }
     }
-    return nil;
-}
-
-//===============================================
-#pragma mark -
-#pragma mark Experimental
-//===============================================
-
-- (CGFloat)currentRatioUniversal {
-    
-    CGFloat xOffset = CGRectGetMinX(self.contentView.frame);
-    CGFloat fullWidth = CGRectGetWidth(self.bounds);
-    
-    CGFloat ratio = xOffset / fullWidth;
-    if (ratio > 1.0) ratio = 1.0;
-    if (ratio < -1.0) ratio = -1.0;
-    
-    return ratio;
-}
-
-- (NSNumber *)triggeredUniversalIndex {
-    
-    CGFloat currentRatio = [self currentRatioUniversal];
-    
-    __block NSInteger triggered = -1;
-    
-    if (currentRatio < 0.0) {
-        [self.triggerRatios enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-            CGFloat triggerRatio = [obj floatValue];
-            if (triggerRatio < 0.0 && currentRatio <= triggerRatio) {
-                triggered = idx;
-                *stop = YES;
-            }
-        }];
-    }
-    else if (currentRatio > 0.0) {
-        [self.triggerRatios enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-            CGFloat triggerRatio = [obj floatValue];
-            if (triggerRatio > 0.0 && currentRatio >= triggerRatio) {
-                triggered = idx;
-                *stop = YES;
-            }
-        }];
-    }
-    
-    if (triggered < 0) {
-        return nil;
-    }
-    return [NSNumber numberWithInteger:triggered];
+    return -1;
 }
 
 //===============================================

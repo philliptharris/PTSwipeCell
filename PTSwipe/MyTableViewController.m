@@ -10,7 +10,9 @@
 
 #import "PTSwipeCell.h"
 
-@interface MyTableViewController ()
+#import "UIColor+LightDark.h"
+
+@interface MyTableViewController () <PTSwipeCellDelegate>
 
 @end
 
@@ -40,15 +42,18 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     PTSwipeCell *cell = [tableView dequeueReusableCellWithIdentifier:PTSwipeCellId forIndexPath:indexPath];
+    cell.delegate = self;
+//    cell.sliderSlides = NO;
     
+    cell.defaultColor = [UIColor sevenGroupedTableViewBackground];
     cell.contentView.backgroundColor = [UIColor whiteColor];
     
-    cell.leftTriggerRatios = @[@0.2, @0.4];
-    cell.leftColors = @[[UIColor blueColor], [UIColor greenColor]];
+    cell.leftTriggerRatios = @[@0.2, @0.7];
+    cell.leftColors = @[[UIColor sevenGreen], [UIColor sevenRed]];
     cell.leftImageNames = @[@"check", @"cross"];
     
-    cell.rightTriggerRatios = @[@0.5, @0.75];
-    cell.rightColors = @[[UIColor orangeColor], [UIColor yellowColor]];
+    cell.rightTriggerRatios = @[@0.2, @0.5];
+    cell.rightColors = @[[UIColor sevenBlue], [UIColor sevenIndigo]];
     cell.rightImageNames = @[@"pencil", @"plus"];
     
     cell.textLabel.text = [NSString stringWithFormat:@"%li", (long)indexPath.row];
@@ -63,6 +68,19 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+//===============================================
+#pragma mark -
+#pragma mark UITableViewDataSource
+//===============================================
+
+- (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side {
+    NSLog(@"didSwipeTo:%li onSide:%li", (long)index, side);
+}
+
+- (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side {
+    NSLog(@"didReleaseAt:%li onSide:%li", (long)index, side);
 }
 
 @end

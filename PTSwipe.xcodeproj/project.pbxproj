@@ -24,7 +24,6 @@
 		F4964FCE1848E4F8005C847D /* PTSwipeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FCD1848E4F8005C847D /* PTSwipeTests.m */; };
 		F4964FD91848E543005C847D /* MyTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FD81848E543005C847D /* MyTableViewController.m */; };
 		F4964FDC1848E5F1005C847D /* PTSwipeCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FDB1848E5F1005C847D /* PTSwipeCell.m */; };
-		F4964FDF1848EC3E005C847D /* PTSwipeItem.m in Sources */ = {isa = PBXBuildFile; fileRef = F4964FDE1848EC3E005C847D /* PTSwipeItem.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,8 +61,6 @@
 		F4964FD81848E543005C847D /* MyTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyTableViewController.m; sourceTree = "<group>"; };
 		F4964FDA1848E5F1005C847D /* PTSwipeCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTSwipeCell.h; sourceTree = "<group>"; };
 		F4964FDB1848E5F1005C847D /* PTSwipeCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTSwipeCell.m; sourceTree = "<group>"; };
-		F4964FDD1848EC3E005C847D /* PTSwipeItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTSwipeItem.h; sourceTree = "<group>"; };
-		F4964FDE1848EC3E005C847D /* PTSwipeItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTSwipeItem.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,8 +129,6 @@
 				F4964FD81848E543005C847D /* MyTableViewController.m */,
 				F4964FDA1848E5F1005C847D /* PTSwipeCell.h */,
 				F4964FDB1848E5F1005C847D /* PTSwipeCell.m */,
-				F4964FDD1848EC3E005C847D /* PTSwipeItem.h */,
-				F4964FDE1848EC3E005C847D /* PTSwipeItem.m */,
 				11AB3532184CED5B004A7F8D /* UIColor+LightDark.h */,
 				11AB3533184CED5B004A7F8D /* UIColor+LightDark.m */,
 				F4964FA61848E4F8005C847D /* Supporting Files */,
@@ -268,7 +263,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4964FDF1848EC3E005C847D /* PTSwipeItem.m in Sources */,
 				F4964FB01848E4F8005C847D /* AppDelegate.m in Sources */,
 				F4964FAC1848E4F8005C847D /* main.m in Sources */,
 				F4964FD91848E543005C847D /* MyTableViewController.m in Sources */,

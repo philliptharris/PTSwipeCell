@@ -30,7 +30,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 @property (nonatomic, strong) UIGravityBehavior *gravityBehavior;
 @property (nonatomic, strong) UICollisionBehavior *boundaryCollisionBehavior;
 
-@property (nonatomic, strong) NSDate *lastPanTime;
+@property (nonatomic, strong) NSDate *lastPanTime_forVelocityCalculation;
 
 @property (nonatomic, assign) CGRect homeFrm;
 
@@ -42,16 +42,6 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark -
 #pragma mark Setters
 //===============================================
-
-//- (void)setDisplayIndex:(NSNumber *)displayIndex {
-//
-//    if (_displayIndex != displayIndex) {
-//        if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipeTo:onSide:)]) {
-//            [self.delegate swipeCell:self didSwipeTo:(displayIndex ? [displayIndex integerValue] : -1) onSide:self.revealedSide];
-//        }
-//    }
-//    _displayIndex = displayIndex;
-//}
 
 - (void)setDraggingIndex:(NSInteger)draggingIndex {
     
@@ -216,7 +206,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 //===============================================
 #pragma mark -
-#pragma mark UIPanGestureRecognizer
+#pragma mark UIGestureRecognizerDelegate
 //===============================================
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
@@ -232,6 +222,11 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     }
     return NO;
 }
+
+//===============================================
+#pragma mark -
+#pragma mark UIPanGestureRecognizer
+//===============================================
 
 - (void)handlePanGestureRecognizer:(UIPanGestureRecognizer *)gesture {
     
@@ -250,9 +245,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         
         if (CGRectGetWidth(self.homeFrm) < 1.0) {
             self.homeFrm = self.contentView.frame;
-//            NSLog(@"%@", NSStringFromCGRect(self.homeFrm));
         }
-        NSLog(@"began with translation %f", [gesture translationInView:self].x);
     }
     
     static CGFloat lastDeltaX_forVelocityCalculation;
@@ -266,16 +259,6 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.draggingIndex = [self currentDraggingIndex];
     
     self.imageIndex = [self currentImageIndex];
-//    BOOL displayIndexHasChanged = NO;
-//    NSNumber *currentIndex = [self currentDisplayIndex];
-//    if (self.displayIndex && currentIndex) {
-//        if ([self.displayIndex integerValue] != [currentIndex integerValue]) {
-//            displayIndexHasChanged = YES;
-//        }
-//    }
-//    else if (self.displayIndex != currentIndex) {
-//        displayIndexHasChanged = YES;
-//    }
     
     [self updateSliderFrame];
     
@@ -291,7 +274,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         
         self.dragging = NO;
         
-        CGFloat panVelocityX = lastDeltaX_forVelocityCalculation / (-1.0 * [self.lastPanTime timeIntervalSinceNow]);
+        CGFloat panVelocityX = lastDeltaX_forVelocityCalculation / (-1.0 * [self.lastPanTime_forVelocityCalculation timeIntervalSinceNow]);
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
         [self beginDynamicAnimationWithPanVelocityX:panVelocityX];
@@ -304,7 +287,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     }
     
     [gesture setTranslation:CGPointZero inView:self];
-    self.lastPanTime = [NSDate date];
+    self.lastPanTime_forVelocityCalculation = [NSDate date];
 }
 
 - (void)translateContentViewAlongXaxis:(CGFloat)translationX {

@@ -148,7 +148,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark Dynamic Animator
 //===============================================
 
-- (void)beginDynamicAnimationWithPanVelocityX:(CGFloat)velocityX {
+- (void)beginGravityAnimationToCenterWithPanVelocityX:(CGFloat)velocityX {
     
     [self.boundaryCollisionBehavior removeAllBoundaries];
     [self.boundaryCollisionBehavior addBoundaryWithIdentifier:MSDynamicsDrawerBoundaryIdentifier forPath:[self boundaryPathForState]];
@@ -177,6 +177,22 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 //    self.pushBehaviorInstantaneous.active = YES;
 }
 
+- (void)beginGravityAnimationOffScreenWithPanVelocityX:(CGFloat)velocityX {
+    
+    [self.boundaryCollisionBehavior removeAllBoundaries];
+    [self.boundaryCollisionBehavior addBoundaryWithIdentifier:MSDynamicsDrawerBoundaryIdentifier forPath:[self boundaryPathForState]];
+    [self.dynamicAnimator addBehavior:self.boundaryCollisionBehavior];
+    
+    self.gravityBehavior.magnitude = self.gravityMagnitude;
+    self.gravityBehavior.angle = (self.revealedSide == PTSwipeCellSideRight) ? M_PI : 0.0;
+    [self.dynamicAnimator addBehavior:self.gravityBehavior];
+    
+    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX / 5.0, 0.0) forItem:self.contentView];
+    self.elasticityBehavior.elasticity = 0.0;
+    self.elasticityBehavior.allowsRotation = NO;
+    [self.dynamicAnimator addBehavior:self.elasticityBehavior];
+}
+
 - (UIBezierPath *)boundaryPathForState {
     
     CGRect boundary = CGRectZero;
@@ -198,7 +214,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (void)dynamicAnimatorDidPause:(UIDynamicAnimator *)animator {
     
+    NSLog(@"didPause");
+    
     [self.dynamicAnimator removeAllBehaviors];
+    
+    if (self.draggingIndex != -1 && [self.delegate respondsToSelector:@selector(swipeCell:didFinishAnimatingFrom:onSide:)]) {
+        [self.delegate swipeCell:self didFinishAnimatingFrom:self.draggingIndex onSide:self.revealedSide];
+    }
     
     // It turns out that we don't want to do this. If the user starts panning the cell in the middle of a dynamic animation, this will cause the contentView to jump back to zero. We want the contentView to stay where it is.
 //    self.contentView.frame = self.homeFrm;
@@ -277,7 +299,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         CGFloat panVelocityX = lastDeltaX_forVelocityCalculation / (-1.0 * [self.lastPanTime_forVelocityCalculation timeIntervalSinceNow]);
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
-        [self beginDynamicAnimationWithPanVelocityX:panVelocityX];
+        
+        if (self.imageIndex == 0) {
+            [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
+        }
+        else {
+            [self beginGravityAnimationOffScreenWithPanVelocityX:panVelocityX];
+        }
         
         if (self.draggingIndex != -1) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didReleaseAt:onSide:)]) {

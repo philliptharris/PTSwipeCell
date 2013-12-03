@@ -69,9 +69,8 @@ extern NSString * const PTSwipeCellId;
 
 
 @protocol PTSwipeCellDelegate <NSObject>
-
 @optional
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side;
 - (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side;
-
+- (void)swipeCell:(PTSwipeCell *)cell didFinishAnimatingFrom:(NSInteger)index onSide:(PTSwipeCellSide)side;
 @end

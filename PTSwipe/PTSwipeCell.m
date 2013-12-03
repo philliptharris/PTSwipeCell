@@ -187,7 +187,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.gravityBehavior.angle = (self.revealedSide == PTSwipeCellSideRight) ? M_PI : 0.0;
     [self.dynamicAnimator addBehavior:self.gravityBehavior];
     
-    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX / 5.0, 0.0) forItem:self.contentView];
+    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX, 0.0) forItem:self.contentView];
     self.elasticityBehavior.elasticity = 0.0;
     self.elasticityBehavior.allowsRotation = NO;
     [self.dynamicAnimator addBehavior:self.elasticityBehavior];

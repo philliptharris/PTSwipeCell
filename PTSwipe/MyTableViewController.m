@@ -53,7 +53,7 @@
     cell.defaultColor = [UIColor sevenGroupedTableViewBackground];
     cell.contentView.backgroundColor = [UIColor whiteColor];
     
-    cell.leftTriggerRatios = @[@0.2, @0.7];
+    cell.leftTriggerRatios = @[@0.2, @0.25];
     cell.leftColors = @[[UIColor sevenGreen], [UIColor sevenRed]];
     cell.leftImageNames = @[@"check", @"cross"];
     

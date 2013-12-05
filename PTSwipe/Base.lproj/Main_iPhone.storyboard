@@ -4,7 +4,7 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
     </dependencies>
     <scenes>
-        <!--My Table View Controller - Root View Controller-->
+        <!--My Table View Controller - My List-->
         <scene sceneID="PkI-xb-WfZ">
             <objects>
                 <tableViewController id="anQ-dH-kpg" customClass="MyTableViewController" sceneMemberID="viewController">
@@ -13,7 +13,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Root View Controller" id="xSL-K2-8KO"/>
+                    <navigationItem key="navigationItem" title="My List" id="xSL-K2-8KO"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="N4e-wn-sQg" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

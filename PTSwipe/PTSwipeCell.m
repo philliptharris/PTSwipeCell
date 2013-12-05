@@ -109,7 +109,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     _dragging = NO;
     _draggingIndex = -1;
     _imageIndex = -1;
-    _sliderShouldSlide = YES;
+    _leftSliderShouldSlide = YES;
+    _rightSliderShouldSlide = YES;
     
     _defaultColor = [UIColor lightGrayColor];
     
@@ -300,12 +301,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
         
-        if (self.imageIndex == 0) {
-            [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
-        }
-        else {
-            [self beginGravityAnimationOffScreenWithPanVelocityX:panVelocityX];
-        }
+//        if (self.imageIndex == 0) {
+//            [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
+//        }
+//        else {
+//            [self beginGravityAnimationOffScreenWithPanVelocityX:panVelocityX];
+//        }
+        [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
         
         if (self.draggingIndex != -1) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didReleaseAt:onSide:)]) {
@@ -339,13 +341,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     if (self.revealedSide == PTSwipeCellSideRight) {
         CGFloat xPoint = CGRectGetMaxX(self.contentView.frame);
         CGFloat maxX = CGRectGetWidth(self.bounds) - CGRectGetWidth(frm);
-        if (xPoint > maxX || !self.sliderShouldSlide) xPoint = maxX;
+        if (xPoint > maxX || !self.rightSliderShouldSlide) xPoint = maxX;
         frm.origin.x = xPoint;
     }
     else if (self.revealedSide == PTSwipeCellSideLeft) {
         CGFloat xPoint = CGRectGetMinX(self.contentView.frame) - CGRectGetWidth(frm);
         CGFloat minX = 0.0;
-        if (xPoint < minX || !self.sliderShouldSlide) xPoint = minX;
+        if (xPoint < minX || !self.leftSliderShouldSlide) xPoint = minX;
         frm.origin.x = xPoint;
     }
     
@@ -401,9 +403,11 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     if (index >= 0) {
         if (side == PTSwipeCellSideLeft) {
+            if (index >= [self.leftImageNames count]) return nil;
             return [self.leftImageNames objectAtIndex:index];
         }
         else if (side == PTSwipeCellSideRight) {
+            if (index >= [self.rightImageNames count]) return nil;
             return [self.rightImageNames objectAtIndex:index];
         }
     }

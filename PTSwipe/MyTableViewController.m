@@ -25,8 +25,10 @@
     for (int i = 0; i < 30; i++) {
         [_dataSource addObject:[NSString stringWithFormat:@"Item %i", i]];
     }
+    _dataSource = [NSMutableArray array];
+    [_dataSource addObjectsFromArray:@[@"Milk", @"Bread", @"Bananas", @"Apples", @"Orange Juice", @"Bacon"]];
     
-    self.tableView.rowHeight = 64.0;
+    self.tableView.rowHeight = 64.5;
     self.tableView.separatorInset = UIEdgeInsetsZero;
     [self.tableView registerClass:[PTSwipeCell class] forCellReuseIdentifier:PTSwipeCellId];
 }
@@ -48,18 +50,19 @@
     
     PTSwipeCell *cell = [tableView dequeueReusableCellWithIdentifier:PTSwipeCellId forIndexPath:indexPath];
     cell.delegate = self;
-//    cell.sliderSlides = NO;
+    cell.leftSliderShouldSlide = NO;
+    cell.rightSliderShouldSlide = YES;
     
     cell.defaultColor = [UIColor sevenGroupedTableViewBackground];
     cell.contentView.backgroundColor = [UIColor whiteColor];
     
-    cell.leftTriggerRatios = @[@0.2, @0.25];
-    cell.leftColors = @[[UIColor sevenGreen], [UIColor sevenRed]];
-    cell.leftImageNames = @[@"check", @"cross"];
+    cell.leftTriggerRatios = @[@0.15];
+    cell.leftColors = @[[UIColor sevenGreen]];
+    cell.leftImageNames = @[@"check"];
     
-    cell.rightTriggerRatios = @[@0.2, @0.5];
-    cell.rightColors = @[[UIColor sevenBlue], [UIColor sevenIndigo]];
-    cell.rightImageNames = @[@"pencil", @"plus"];
+    cell.rightTriggerRatios = @[@0.15, @0.3, @0.45, @0.6];
+    cell.rightColors = @[[UIColor sevenOrange], [UIColor sevenIndigo], [UIColor sevenBlue], [UIColor sevenRed]];
+    cell.rightImageNames = @[@"replyArrow", @"pencil", @"folder", @"cross"];
     
     cell.textLabel.text = self.dataSource[indexPath.row];
     cell.textLabel.backgroundColor = [UIColor clearColor];
@@ -84,12 +87,12 @@
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side {
     NSLog(@"didSwipeTo:%li onSide:%i", (long)index, side);
     
-//    if (side == PTSwipeCellSideLeft && index == 0) {
-//        cell.contentView.backgroundColor = [UIColor sevenGroupedTableViewBackground];
-//    }
-//    else {
-//        cell.contentView.backgroundColor = [UIColor whiteColor];
-//    }
+    if (side == PTSwipeCellSideLeft && index == 0) {
+        cell.contentView.backgroundColor = [UIColor sevenGroupedTableViewBackground];
+    }
+    else {
+        cell.contentView.backgroundColor = [UIColor whiteColor];
+    }
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side {

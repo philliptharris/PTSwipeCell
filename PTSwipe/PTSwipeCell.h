@@ -57,7 +57,10 @@ extern NSString * const PTSwipeCellId;
 @property (nonatomic, assign, readonly) NSInteger imageIndex;
 
 /// Whether or not the slider should slide along with the contentView as the user drags her finger across the cell. Defaults to YES.
-@property (nonatomic, assign) BOOL sliderShouldSlide;
+@property (nonatomic, assign) BOOL leftSliderShouldSlide;
+
+/// Whether or not the slider should slide along with the contentView as the user drags her finger across the cell. Defaults to YES.
+@property (nonatomic, assign) BOOL rightSliderShouldSlide;
 
 /// The magnitude of the gravity vector for the gravity behavior of the cell's contentView. Defaults to 3.0. A magnitude value of 1.0 represents an acceleration of 1000 points / second².
 @property (nonatomic, assign) CGFloat gravityMagnitude;

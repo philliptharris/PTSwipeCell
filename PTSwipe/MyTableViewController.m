@@ -52,6 +52,17 @@
     cell.delegate = self;
     cell.leftSliderShouldSlide = NO;
     cell.rightSliderShouldSlide = YES;
+    cell.leftAnimationStyle = PTSwipeCellAnimationStyleGravity;
+    cell.rightAnimationStyle = PTSwipeCellAnimationStyleSnap;
+    cell.rightConfiguration = PTSwipeCellConfigurationButtons;
+    
+    UIButton *deleteButton = [PTSwipeCell defaultButton];
+    [deleteButton setTitle:@"Delete" forState:UIControlStateNormal];
+    [deleteButton setBackgroundColor:[UIColor sevenRed]];
+    UIButton *moreButton = [PTSwipeCell defaultButton];
+    [moreButton setTitle:@"More" forState:UIControlStateNormal];
+    [moreButton setBackgroundColor:[UIColor sevenGroupedTableSeparatorLineGray]];
+    cell.rightButtons = @[deleteButton, moreButton];
     
     cell.defaultColor = [UIColor sevenGroupedTableViewBackground];
     cell.contentView.backgroundColor = [UIColor whiteColor];
@@ -60,9 +71,9 @@
     cell.leftColors = @[[UIColor sevenGreen]];
     cell.leftImageNames = @[@"check"];
     
-    cell.rightTriggerRatios = @[@0.15, @0.3, @0.45, @0.6];
-    cell.rightColors = @[[UIColor sevenOrange], [UIColor sevenIndigo], [UIColor sevenBlue], [UIColor sevenRed]];
-    cell.rightImageNames = @[@"replyArrow", @"pencil", @"folder", @"cross"];
+//    cell.rightTriggerRatios = @[@0.15, @0.3, @0.45, @0.6];
+//    cell.rightColors = @[[UIColor sevenOrange], [UIColor sevenIndigo], [UIColor sevenBlue], [UIColor sevenRed]];
+//    cell.rightImageNames = @[@"replyArrow", @"pencil", @"folder", @"cross"];
     
     cell.textLabel.text = self.dataSource[indexPath.row];
     cell.textLabel.backgroundColor = [UIColor clearColor];

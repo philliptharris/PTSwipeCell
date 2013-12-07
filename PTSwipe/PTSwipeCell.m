@@ -8,6 +8,11 @@
 
 #import "PTSwipeCell.h"
 
+typedef NS_ENUM(NSInteger, PTSwipeCellButtonRevealState) {
+    PTSwipeCellButtonRevealStateExposed,
+    PTSwipeCellButtonRevealStateCovered
+};
+
 NSString * const PTSwipeCellId = @"PTSwipeCellId";
 
 NSString * const MSDynamicsDrawerBoundaryIdentifier = @"MSDynamicsDrawerBoundaryIdentifier";
@@ -33,6 +38,9 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 @property (nonatomic, strong) NSDate *lastPanTime_forVelocityCalculation;
 
 @property (nonatomic, assign) CGRect homeFrm;
+
+@property (nonatomic, assign) BOOL leftButtonsHaveBeenAdded;
+@property (nonatomic, assign) BOOL rightButtonsHaveBeenAdded;
 
 @end
 
@@ -75,6 +83,30 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         NSLog(@"setting image to %@", imageName);
     }
     _revealedSide = revealedSide;
+    
+    [self setButtonVisibility];
+}
+
+- (void)setLeftButtons:(NSArray *)leftButtons {
+    
+    if (_leftButtons && [_leftButtons count] > 0) {
+        for (UIButton *button in _leftButtons) {
+            [button removeFromSuperview];
+        }
+    }
+    _leftButtons = leftButtons;
+    _leftButtonsHaveBeenAdded = NO;
+}
+
+- (void)setRightButtons:(NSArray *)rightButtons {
+    
+    if (_rightButtons && [_rightButtons count] > 0) {
+        for (UIButton *button in _rightButtons) {
+            [button removeFromSuperview];
+        }
+    }
+    _rightButtons = rightButtons;
+    _rightButtonsHaveBeenAdded = NO;
 }
 
 //===============================================
@@ -106,13 +138,27 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 
 - (void)initializer {
     
+    // Private property initialization
+    //
     _dragging = NO;
     _draggingIndex = -1;
     _imageIndex = -1;
+    _homeFrm = CGRectZero;
+    _leftButtonsHaveBeenAdded = NO;
+    _rightButtonsHaveBeenAdded = NO;
+    
+    // Public property defaults
+    //
     _leftSliderShouldSlide = YES;
     _rightSliderShouldSlide = YES;
-    
+    _leftAnimationStyle = PTSwipeCellAnimationStyleGravity;
+    _rightAnimationStyle = PTSwipeCellAnimationStyleGravity;
+    _leftConfiguration = PTSwipeCellConfigurationSwipeAndRelease;
+    _rightConfiguration = PTSwipeCellConfigurationSwipeAndRelease;
     _defaultColor = [UIColor lightGrayColor];
+    _gravityMagnitude = 3.0;
+    _elasticity = 0.3;
+    _defaultButtonWidth = 74.0;
     
     _colorIndicatorView = [[UIView alloc] initWithFrame:self.bounds];
     _colorIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -135,13 +181,16 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.pushBehaviorInstantaneous = [[UIPushBehavior alloc] initWithItems:@[self.contentView] mode:UIPushBehaviorModeInstantaneous];
     self.elasticityBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self.contentView]];
     
-    self.gravityMagnitude = 3.0;
-    self.elasticity = 0.3;
-    
-    _homeFrm = CGRectZero;
-    
 //    _slidingImageView.layer.borderColor = [UIColor blackColor].CGColor;
 //    _slidingImageView.layer.borderWidth = 1.0;
+}
+
++ (UIButton *)defaultButton {
+    
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.backgroundColor = [UIColor purpleColor];
+    button.titleLabel.textColor = [UIColor whiteColor];
+    return button;
 }
 
 //===============================================
@@ -149,25 +198,46 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark Dynamic Animator
 //===============================================
 
+- (void)beginAnimationToState:(PTSwipeCellButtonRevealState)revealState onSide:(PTSwipeCellSide)side withPanVelocityX:(CGFloat)velocityX animationStyle:(PTSwipeCellAnimationStyle)animationStyle {
+    
+    if (animationStyle == PTSwipeCellAnimationStyleGravity) {
+        [self beginGravityAnimationToState:revealState onSide:side withPanVelocityX:velocityX];
+    }
+    else if (animationStyle == PTSwipeCellAnimationStyleSnap) {
+        [self beginSnapAnimationToState:revealState onSide:side withPanVelocityX:velocityX];
+    }
+}
+
+//- (void)beginAnimationToCenterWithPanVelocityX:(CGFloat)velocityX animationStyle:(PTSwipeCellAnimationStyle)animationStyle {
+//    
+//    if (animationStyle == PTSwipeCellAnimationStyleGravity) {
+//        [self beginGravityAnimationToCenterWithPanVelocityX:velocityX];
+//    }
+//    else if (animationStyle == PTSwipeCellAnimationStyleSnap) {
+//        [self beginSnapAnimationToCenterWithPanVelocityX:velocityX];
+//    }
+//}
+
 - (void)beginGravityAnimationToCenterWithPanVelocityX:(CGFloat)velocityX {
+    [self beginGravityAnimationToState:PTSwipeCellButtonRevealStateCovered onSide:self.revealedSide withPanVelocityX:velocityX];
+}
+
+- (void)beginGravityAnimationToState:(PTSwipeCellButtonRevealState)revealState onSide:(PTSwipeCellSide)side withPanVelocityX:(CGFloat)velocityX {
+    
+    UIBezierPath *collisionBoundary = [self boundaryPathForEndingState:revealState onSide:side];
     
     [self.boundaryCollisionBehavior removeAllBoundaries];
-    [self.boundaryCollisionBehavior addBoundaryWithIdentifier:MSDynamicsDrawerBoundaryIdentifier forPath:[self boundaryPathForState]];
+    [self.boundaryCollisionBehavior addBoundaryWithIdentifier:MSDynamicsDrawerBoundaryIdentifier forPath:collisionBoundary];
     [self.dynamicAnimator addBehavior:self.boundaryCollisionBehavior];
     
     self.gravityBehavior.magnitude = self.gravityMagnitude;
-    self.gravityBehavior.angle = [self gravityAngleForState];
+    self.gravityBehavior.angle = [self gravityAngleForEndingState:revealState onSide:side];
     [self.dynamicAnimator addBehavior:self.gravityBehavior];
     
-    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX / 5.0, 0.0) forItem:self.contentView];
+    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX / 5.0, 0.0) forItem:self.contentView]; // / 5.0
     self.elasticityBehavior.elasticity = self.elasticity;
     self.elasticityBehavior.allowsRotation = NO;
     [self.dynamicAnimator addBehavior:self.elasticityBehavior];
-    
-    // This doesn't seem to work right. If no boundary is set, the contentView will wobble around its center point. If there is a boundary, the view looks like it gets stuck on the way back to center.
-//    UISnapBehavior *snapBehavior = [[UISnapBehavior alloc] initWithItem:self.contentView snapToPoint:CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0, CGRectGetHeight(self.contentView.bounds) / 2.0)];
-//    snapBehavior.damping = 0.2;
-//    [self.dynamicAnimator addBehavior:snapBehavior];
     
     // If we give the item some initial velocity, we don't need to use the UIPushBehavior.
 //    CGFloat pushMagnitude = fabsf(velocityX) * MSPaneViewVelocityMultiplier;
@@ -176,6 +246,128 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 //    NSLog(@"angle %f | magnitude %f", self.pushBehaviorInstantaneous.angle, self.pushBehaviorInstantaneous.magnitude);
 //    [self.dynamicAnimator addBehavior:self.pushBehaviorInstantaneous];
 //    self.pushBehaviorInstantaneous.active = YES;
+}
+
+//- (void)beginSnapAnimationToCenterWithPanVelocityX:(CGFloat)velocityX {
+//    
+//    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX, 0.0) forItem:self.contentView];
+//    self.elasticityBehavior.allowsRotation = NO;
+//    [self.dynamicAnimator addBehavior:self.elasticityBehavior];
+//    
+//    // This doesn't seem to work right (think i fixed it though). If no boundary is set, the contentView will wobble around its center point (just add another behavior with allowsRotation = NO to fix this). If there is a boundary, the view looks like it gets stuck on the way back to center (this was due to a gravity behavior. get rid of the gravity behavior and the view will animate all the way back to the proper point).
+//    CGPoint snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0, CGRectGetHeight(self.contentView.bounds) / 2.0);
+//    UISnapBehavior *snapBehavior = [[UISnapBehavior alloc] initWithItem:self.contentView snapToPoint:snapPoint];
+//    snapBehavior.damping = 0.35;
+//    [self.dynamicAnimator addBehavior:snapBehavior];
+//}
+
+- (void)beginSnapAnimationToState:(PTSwipeCellButtonRevealState)revealState onSide:(PTSwipeCellSide)side withPanVelocityX:(CGFloat)velocityX {
+    
+    [self.elasticityBehavior addLinearVelocity:CGPointMake(velocityX, 0.0) forItem:self.contentView];
+    self.elasticityBehavior.allowsRotation = NO;
+    [self.dynamicAnimator addBehavior:self.elasticityBehavior];
+    
+    CGPoint snapPoint;
+    if (revealState == PTSwipeCellButtonRevealStateCovered || side == PTSwipeCellSideCenter) {
+        snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0, CGRectGetHeight(self.contentView.bounds) / 2.0);
+    }
+    else if (revealState == PTSwipeCellButtonRevealStateExposed) {
+        if (side == PTSwipeCellSideLeft) {
+            CGFloat exposedWidth = [self exposurePointXforSide:side];
+            snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0 + exposedWidth, CGRectGetHeight(self.contentView.bounds) / 2.0);
+        }
+        else if (side == PTSwipeCellSideRight) {
+            CGFloat exposedWidth = CGRectGetWidth(self.contentView.bounds) - [self exposurePointXforSide:side];
+            snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0 - exposedWidth, CGRectGetHeight(self.contentView.bounds) / 2.0);
+        }
+    }
+    
+    // This doesn't seem to work right (think i fixed it though). If no boundary is set, the contentView will wobble around its center point (just add another behavior with allowsRotation = NO to fix this). If there is a boundary, the view looks like it gets stuck on the way back to center (this was due to a gravity behavior. get rid of the gravity behavior and the view will animate all the way back to the proper point).
+//    CGPoint snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0, CGRectGetHeight(self.contentView.bounds) / 2.0);
+    UISnapBehavior *snapBehavior = [[UISnapBehavior alloc] initWithItem:self.contentView snapToPoint:snapPoint];
+    snapBehavior.damping = 0.35;
+    [self.dynamicAnimator addBehavior:snapBehavior];
+}
+
+//- (void)beginAnimationToExposeButtonSide:(PTSwipeCellSide)side withPanVelocityX:(CGFloat)velocityX animationStyle:(PTSwipeCellAnimationStyle)animationStyle {
+//    
+//    if (animationStyle == PTSwipeCellAnimationStyleGravity) {
+//        [self beginGravityAnimationToCenterWithPanVelocityX:velocityX];
+//    }
+//    else if (animationStyle == PTSwipeCellAnimationStyleSnap) {
+//        [self beginSnapAnimationToState:PTSwipeCellButtonRevealStateExposed onSide:side withPanVelocityX:velocityX];
+//    }
+//}
+
+- (UIBezierPath *)boundaryPathForState {
+    
+    CGRect boundary = CGRectZero;
+    boundary.origin.y = -1.0;
+    boundary.size.height = (CGRectGetHeight(self.bounds) + 1.0);
+    boundary.size.width = ((CGRectGetWidth(self.contentView.bounds) * 2.0) + 2.0);
+    boundary.origin.x = (self.revealedSide == PTSwipeCellSideRight) ? -1.0 * CGRectGetWidth(self.contentView.bounds) - 1.0 : -1.0;
+    return [UIBezierPath bezierPathWithRect:boundary];
+}
+
+- (UIBezierPath *)boundaryPathForEndingState:(PTSwipeCellButtonRevealState)endingRevealState onSide:(PTSwipeCellSide)side {
+    
+    CGRect boundary = CGRectZero;
+    boundary.origin.y = -1.0;
+    boundary.size.height = (CGRectGetHeight(self.bounds) + 1.0);
+    
+    if (endingRevealState == PTSwipeCellButtonRevealStateCovered) {
+        boundary.size.width = ((CGRectGetWidth(self.contentView.bounds) * 2.0) + 2.0);
+        boundary.origin.x = (side == PTSwipeCellSideRight) ? -1.0 * CGRectGetWidth(self.contentView.bounds) - 1.0 : -1.0;
+    }
+    else if (endingRevealState == PTSwipeCellButtonRevealStateExposed) {
+        if (side == PTSwipeCellSideLeft) {
+            CGFloat rightEdgeOfRightmostButton = [self exposurePointXforSide:PTSwipeCellSideLeft];
+            CGFloat currentLeftEdge = CGRectGetMinX(self.contentView.frame);
+            if (currentLeftEdge < rightEdgeOfRightmostButton) {
+                boundary.size.width = (CGRectGetWidth(self.contentView.bounds) + rightEdgeOfRightmostButton + 2.0);
+                boundary.origin.x = -1.0;
+            }
+            else {
+                boundary.size.width = (CGRectGetWidth(self.contentView.bounds) * 2.0 + 2.0);
+                boundary.origin.x = rightEdgeOfRightmostButton - 1.0;
+            }
+        }
+        else if (side == PTSwipeCellSideRight) {
+            CGFloat leftEdgeOfLeftmostButton = [self exposurePointXforSide:PTSwipeCellSideRight];
+            CGFloat currentRightEdge = CGRectGetMaxX(self.contentView.frame);
+            CGFloat exposedWidth = CGRectGetWidth(self.contentView.bounds) - leftEdgeOfLeftmostButton;
+            if (currentRightEdge < leftEdgeOfLeftmostButton) {
+                boundary.size.width = (CGRectGetWidth(self.contentView.bounds) * 2.0 + 2.0);
+                boundary.origin.x = -1.0 * CGRectGetWidth(self.contentView.bounds) - exposedWidth - 1.0;
+            }
+            else {
+                boundary.size.width = (CGRectGetWidth(self.contentView.bounds) + exposedWidth + 2.0);
+                boundary.origin.x = -1.0 * exposedWidth - 1.0;
+            }
+        }
+    }
+    
+    return [UIBezierPath bezierPathWithRect:boundary];
+}
+
+- (CGFloat)gravityAngleForEndingState:(PTSwipeCellButtonRevealState)endingRevealState onSide:(PTSwipeCellSide)side {
+    
+    if (endingRevealState == PTSwipeCellButtonRevealStateCovered) {
+        return (side == PTSwipeCellSideRight) ? 0.0 : M_PI;
+    }
+    else if (endingRevealState == PTSwipeCellButtonRevealStateExposed) {
+        if (side == PTSwipeCellSideLeft) {
+            CGFloat rightEdgeOfRightmostButton = [self exposurePointXforSide:PTSwipeCellSideLeft];
+            CGFloat currentLeftEdge = CGRectGetMinX(self.contentView.frame);
+            return (currentLeftEdge < rightEdgeOfRightmostButton) ? 0.0 : M_PI;
+        }
+        else if (side == PTSwipeCellSideRight) {
+            CGFloat leftEdgeOfLeftmostButton = [self exposurePointXforSide:PTSwipeCellSideRight];
+            CGFloat currentRightEdge = CGRectGetMaxX(self.contentView.frame);
+            return (currentRightEdge < leftEdgeOfLeftmostButton) ? 0.0 : M_PI;
+        }
+    }
+    return 0.0;
 }
 
 - (void)beginGravityAnimationOffScreenWithPanVelocityX:(CGFloat)velocityX {
@@ -192,20 +384,6 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     self.elasticityBehavior.elasticity = 0.0;
     self.elasticityBehavior.allowsRotation = NO;
     [self.dynamicAnimator addBehavior:self.elasticityBehavior];
-}
-
-- (UIBezierPath *)boundaryPathForState {
-    
-    CGRect boundary = CGRectZero;
-    boundary.origin.y = -1.0;
-    boundary.size.height = (CGRectGetHeight(self.bounds) + 1.0);
-    boundary.size.width = ((CGRectGetWidth(self.contentView.bounds) * 2.0) + 2.0);
-    boundary.origin.x = (self.revealedSide == PTSwipeCellSideRight) ? -1.0 * CGRectGetWidth(self.contentView.bounds) - 1.0 : -1.0;
-    return [UIBezierPath bezierPathWithRect:boundary];
-}
-
-- (CGFloat)gravityAngleForState {
-    return (self.revealedSide == PTSwipeCellSideRight) ? 0.0 : M_PI;
 }
 
 //===============================================
@@ -269,6 +447,13 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         if (CGRectGetWidth(self.homeFrm) < 1.0) {
             self.homeFrm = self.contentView.frame;
         }
+        
+        if (self.leftConfiguration == PTSwipeCellConfigurationButtons && !_leftButtonsHaveBeenAdded) {
+            [self layoutButtonsOnSide:PTSwipeCellSideLeft];
+        }
+        else if (self.rightConfiguration == PTSwipeCellConfigurationButtons && !_rightButtonsHaveBeenAdded) {
+            [self layoutButtonsOnSide:PTSwipeCellSideRight];
+        }
     }
     
     static CGFloat lastDeltaX_forVelocityCalculation;
@@ -301,13 +486,29 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         panVelocityX = MIN(10000.0, panVelocityX);
         panVelocityX = MAX(-10000.0, panVelocityX);
         
-//        if (self.imageIndex == 0) {
-//            [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
-//        }
-//        else {
-//            [self beginGravityAnimationOffScreenWithPanVelocityX:panVelocityX];
-//        }
-        [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
+        if (self.revealedSide == PTSwipeCellSideLeft) {
+            if (self.leftConfiguration == PTSwipeCellConfigurationSwipeAndRelease) {
+                [self beginAnimationToState:PTSwipeCellButtonRevealStateCovered onSide:self.revealedSide withPanVelocityX:panVelocityX animationStyle:self.leftAnimationStyle];
+            }
+            else if (self.leftConfiguration == PTSwipeCellConfigurationButtons) {
+                
+                PTSwipeCellButtonRevealState restingState = [self restingButtonRevealStateForPanVelocityX:panVelocityX];
+                [self beginAnimationToState:restingState onSide:self.revealedSide withPanVelocityX:panVelocityX animationStyle:self.leftAnimationStyle];
+            }
+        }
+        else if (self.revealedSide == PTSwipeCellSideRight) {
+            if (self.rightConfiguration == PTSwipeCellConfigurationSwipeAndRelease) {
+                [self beginAnimationToState:PTSwipeCellButtonRevealStateCovered onSide:self.revealedSide withPanVelocityX:panVelocityX animationStyle:self.rightAnimationStyle];
+            }
+            else if (self.rightConfiguration == PTSwipeCellConfigurationButtons) {
+                
+                PTSwipeCellButtonRevealState restingState = [self restingButtonRevealStateForPanVelocityX:panVelocityX];
+                [self beginAnimationToState:restingState onSide:self.revealedSide withPanVelocityX:panVelocityX animationStyle:self.rightAnimationStyle];
+            }
+        }
+        else {
+            [self beginGravityAnimationToCenterWithPanVelocityX:panVelocityX];
+        }
         
         if (self.draggingIndex != -1) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didReleaseAt:onSide:)]) {
@@ -326,6 +527,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     CGFloat newX = CGRectGetMinX(frm) + translationX;
     CGFloat maxX = CGRectGetWidth(self.contentView.bounds);
     CGFloat minX = -1.0 * maxX;
+    if (self.leftConfiguration == PTSwipeCellConfigurationNone) maxX = 0.0;
+    if (self.rightConfiguration == PTSwipeCellConfigurationNone) minX = 0.0;
     if (newX > maxX) newX = maxX;
     if (newX < minX) newX = minX;
     frm.origin.x = newX;
@@ -390,9 +593,15 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
     if (self.draggingIndex != -1) {
         if (self.revealedSide == PTSwipeCellSideLeft) {
+            if (self.leftConfiguration == PTSwipeCellConfigurationButtons) {
+                return self.defaultColor;
+            }
             return [self.leftColors objectAtIndex:self.draggingIndex];
         }
         else if (self.revealedSide == PTSwipeCellSideRight) {
+            if (self.rightConfiguration == PTSwipeCellConfigurationButtons) {
+                return self.defaultColor;
+            }
             return [self.rightColors objectAtIndex:self.draggingIndex];
         }
     }
@@ -461,6 +670,128 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         }
     }
     return -1;
+}
+
+//===============================================
+#pragma mark -
+#pragma mark Button Setup
+//===============================================
+
+- (void)layoutButtonsOnSide:(PTSwipeCellSide)side {
+    
+    if (side == PTSwipeCellSideLeft) {
+        
+        if (self.leftButtons && [self.leftButtons count] > 0) {
+            
+            __block CGFloat xPoint = 0.0;
+            [self.leftButtons enumerateObjectsUsingBlock:^(UIButton *button, NSUInteger idx, BOOL *stop) {
+                CGRect frm = button.frame;
+                frm.size.height = CGRectGetHeight(self.colorIndicatorView.frame);
+                frm.origin.y = 0.0;
+                frm.origin.x = xPoint;
+                if (CGRectGetWidth(frm) < 1.0) frm.size.width = self.defaultButtonWidth;
+                xPoint += CGRectGetWidth(frm);
+                button.frame = frm;
+                [self.colorIndicatorView addSubview:button];
+            }];
+        }
+        _leftButtonsHaveBeenAdded = YES;
+    }
+    else if (side == PTSwipeCellSideRight) {
+        
+        if (self.rightButtons && [self.rightButtons count] > 0) {
+            
+            __block CGFloat xPoint = CGRectGetWidth(self.frame);
+            [self.rightButtons enumerateObjectsUsingBlock:^(UIButton *button, NSUInteger idx, BOOL *stop) {
+                CGRect frm = button.frame;
+                frm.size.height = CGRectGetHeight(self.colorIndicatorView.frame);
+                frm.origin.y = 0.0;
+                if (CGRectGetWidth(frm) < 1.0) frm.size.width = self.defaultButtonWidth;
+                xPoint -= CGRectGetWidth(frm);
+                frm.origin.x = xPoint;
+                button.frame = frm;
+                [self.colorIndicatorView addSubview:button];
+            }];
+        }
+        _rightButtonsHaveBeenAdded = YES;
+    }
+}
+
+- (void)setButtonVisibility {
+    
+    if (self.revealedSide == PTSwipeCellSideLeft) {
+        [self setAllButtonsHidden:YES onSide:PTSwipeCellSideRight];
+        [self setAllButtonsHidden:NO onSide:PTSwipeCellSideLeft];
+    }
+    else if (self.revealedSide == PTSwipeCellSideRight) {
+        [self setAllButtonsHidden:NO onSide:PTSwipeCellSideRight];
+        [self setAllButtonsHidden:YES onSide:PTSwipeCellSideLeft];
+    }
+}
+
+- (void)setAllButtonsHidden:(BOOL)hidden onSide:(PTSwipeCellSide)side {
+    
+    NSArray *array = [self buttonArrayForSide:side];
+    if (!array) return;
+    [array enumerateObjectsUsingBlock:^(UIButton *button, NSUInteger idx, BOOL *stop) {
+        button.hidden = hidden;
+    }];
+}
+
+- (NSArray *)buttonArrayForSide:(PTSwipeCellSide)side {
+    switch (side) {
+        case PTSwipeCellSideLeft:
+            return self.leftButtons;
+        case PTSwipeCellSideRight:
+            return self.rightButtons;
+        case PTSwipeCellSideCenter:
+            return nil;
+        default:
+            return nil;
+    }
+}
+
+- (PTSwipeCellButtonRevealState)restingButtonRevealStateForPanVelocityX:(CGFloat)panVelocityX {
+    
+    if (self.revealedSide == PTSwipeCellSideLeft) {
+        if (panVelocityX > 0.0) return PTSwipeCellButtonRevealStateExposed;
+        else if (panVelocityX < 0.0) return PTSwipeCellButtonRevealStateCovered;
+        else {
+            CGFloat maxX = [self exposurePointXforSide:PTSwipeCellSideLeft];
+            CGFloat currentX = CGRectGetMinX(self.contentView.frame);
+            return (currentX > maxX / 2.0) ? PTSwipeCellButtonRevealStateExposed : PTSwipeCellButtonRevealStateCovered;
+        }
+    }
+    else if (self.revealedSide == PTSwipeCellSideRight) {
+        if (panVelocityX < 0.0) return PTSwipeCellButtonRevealStateExposed;
+        else if (panVelocityX > 0.0) return PTSwipeCellButtonRevealStateCovered;
+        else {
+            CGFloat minX = [self exposurePointXforSide:PTSwipeCellSideRight];
+            CGFloat tripPointX = CGRectGetWidth(self.colorIndicatorView.bounds) - minX / 2.0;
+            CGFloat currentX = CGRectGetMaxX(self.contentView.frame);
+            return (currentX < tripPointX) ? PTSwipeCellButtonRevealStateExposed : PTSwipeCellButtonRevealStateCovered;
+        }
+    }
+    return PTSwipeCellButtonRevealStateCovered;
+}
+
+- (CGFloat)exposurePointXforSide:(PTSwipeCellSide)side {
+    
+    if (side == PTSwipeCellSideLeft) {
+        UIButton *rightmostButton = [self.leftButtons lastObject];
+        if (rightmostButton) {
+            return CGRectGetMaxX(rightmostButton.frame);
+        }
+        return 99999.0;
+    }
+    else if (side == PTSwipeCellSideRight) {
+        UIButton *leftmostButton = [self.rightButtons lastObject];
+        if (leftmostButton) {
+            return CGRectGetMinX(leftmostButton.frame);
+        }
+        return -99999.0;
+    }
+    return 0.0;
 }
 
 //===============================================

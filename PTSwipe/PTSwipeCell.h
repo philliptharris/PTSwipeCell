@@ -14,6 +14,17 @@ typedef NS_ENUM(NSInteger, PTSwipeCellSide) {
     PTSwipeCellSideRight
 };
 
+typedef NS_ENUM(NSInteger, PTSwipeCellAnimationStyle) {
+    PTSwipeCellAnimationStyleGravity,
+    PTSwipeCellAnimationStyleSnap
+};
+
+typedef NS_ENUM(NSInteger, PTSwipeCellConfiguration) {
+    PTSwipeCellConfigurationSwipeAndRelease,
+    PTSwipeCellConfigurationButtons,
+    PTSwipeCellConfigurationNone
+};
+
 extern NSString * const PTSwipeCellId;
 
 @protocol PTSwipeCellDelegate;
@@ -67,6 +78,29 @@ extern NSString * const PTSwipeCellId;
 
 /// The amount of elasticity applied to collisions for the cell's contentView. Default value is 0.3. Valid range is from 0.0 for no bounce upon collision, to 1.0 for completely elastic collisions.
 @property (nonatomic, assign) CGFloat elasticity;
+
+/// The animation style to use when animating the contentView back to center when the left undercarriage is exposed. Defaults to PTSwipeCellAnimationStyleGravity.
+@property (nonatomic, assign) PTSwipeCellAnimationStyle leftAnimationStyle;
+
+/// The animation style to use when animating the contentView back to center when the right undercarriage is exposed. Defaults to PTSwipeCellAnimationStyleGravity.
+@property (nonatomic, assign) PTSwipeCellAnimationStyle rightAnimationStyle;
+
+/// The configuration of the left underling of the cell. Use PTSwipeCellConfigurationSwipeAndRelease for a Mailbox.app-style swipe-and-release. Use PTSwipeCellConfigurationButtons for an array of tappable buttons underneath the contentView similar to the Delete and More buttons in Apple's Mail.app. Set to PTSwipeCellConfigurationNone to prevent the cell from being swiped from left-to-right. Defaults to PTSwipeCellConfigurationSwipeAndRelease.
+@property (nonatomic, assign) PTSwipeCellConfiguration leftConfiguration;
+
+/// The configuration of the right underling of the cell. Use PTSwipeCellConfigurationSwipeAndRelease for a Mailbox.app-style swipe-and-release. Use PTSwipeCellConfigurationButtons for an array of tappable buttons underneath the contentView similar to the Delete and More buttons in Apple's Mail.app. Set to PTSwipeCellConfigurationNone to prevent the cell from being swiped from right-to-left. Defaults to PTSwipeCellConfigurationSwipeAndRelease.
+@property (nonatomic, assign) PTSwipeCellConfiguration rightConfiguration;
+
+/// If leftConfiguration is set to PTSwipeCellConfigurationButtons, then these are the buttons that will be placed under the contentView on the left side of the cell.
+@property (nonatomic, strong) NSArray *leftButtons;
+
+/// If rightConfiguration is set to PTSwipeCellConfigurationButtons, then these are the buttons that will be placed under the contentView on the right side of the cell.
+@property (nonatomic, strong) NSArray *rightButtons;
+
+/// The width to use for buttons if the left or right side's configuration is set to PTSwipeCellConfigurationButtons. You may manually set the width of each individual button before you pass it into the leftButtons/rightButtons array, or you may set this parameter. Defaults to 74.0;
+@property (nonatomic, assign) CGFloat defaultButtonWidth;
+
++ (UIButton *)defaultButton;
 
 @end
 

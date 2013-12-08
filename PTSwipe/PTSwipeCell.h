@@ -79,6 +79,9 @@ extern NSString * const PTSwipeCellId;
 /// The amount of elasticity applied to collisions for the cell's contentView. Default value is 0.3. Valid range is from 0.0 for no bounce upon collision, to 1.0 for completely elastic collisions.
 @property (nonatomic, assign) CGFloat elasticity;
 
+/// The amount of oscillation of a dynamic item during the conclusion of a snap. The valid range for damping extends from 0.0, for minimum oscillation, through 1.0, for maximum oscillation. The default value is 0.35.
+@property (nonatomic, assign) CGFloat snapDamping;
+
 /// The animation style to use when animating the contentView back to center when the left undercarriage is exposed. Defaults to PTSwipeCellAnimationStyleGravity.
 @property (nonatomic, assign) PTSwipeCellAnimationStyle leftAnimationStyle;
 

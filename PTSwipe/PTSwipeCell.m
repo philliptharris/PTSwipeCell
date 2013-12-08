@@ -158,6 +158,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     _defaultColor = [UIColor lightGrayColor];
     _gravityMagnitude = 3.0;
     _elasticity = 0.3;
+    _snapDamping = 0.35;
     _defaultButtonWidth = 74.0;
     
     _colorIndicatorView = [[UIView alloc] initWithFrame:self.bounds];
@@ -191,6 +192,43 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     button.backgroundColor = [UIColor purpleColor];
     button.titleLabel.textColor = [UIColor whiteColor];
     return button;
+}
+
+//===============================================
+#pragma mark -
+#pragma mark Selection & Highlighting
+//===============================================
+
+- (void)setHighlighted:(BOOL)highlighted {
+    [super setHighlighted:highlighted];
+    
+    self.colorIndicatorView.hidden = highlighted;
+    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
+    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
+}
+
+- (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {
+    [super setHighlighted:highlighted animated:animated];
+    
+    self.colorIndicatorView.hidden = highlighted;
+    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
+    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
+}
+
+- (void)setSelected:(BOOL)selected {
+    [super setSelected:selected];
+    
+    self.colorIndicatorView.hidden = selected;
+    [self setAllButtonsHidden:selected onSide:PTSwipeCellSideRight];
+    [self setAllButtonsHidden:selected onSide:PTSwipeCellSideLeft];
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+    
+    self.colorIndicatorView.hidden = selected;
+    [self setAllButtonsHidden:selected onSide:PTSwipeCellSideRight];
+    [self setAllButtonsHidden:selected onSide:PTSwipeCellSideLeft];
 }
 
 //===============================================
@@ -285,7 +323,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     // This doesn't seem to work right (think i fixed it though). If no boundary is set, the contentView will wobble around its center point (just add another behavior with allowsRotation = NO to fix this). If there is a boundary, the view looks like it gets stuck on the way back to center (this was due to a gravity behavior. get rid of the gravity behavior and the view will animate all the way back to the proper point).
 //    CGPoint snapPoint = CGPointMake(CGRectGetWidth(self.contentView.bounds) / 2.0, CGRectGetHeight(self.contentView.bounds) / 2.0);
     UISnapBehavior *snapBehavior = [[UISnapBehavior alloc] initWithItem:self.contentView snapToPoint:snapPoint];
-    snapBehavior.damping = 0.35;
+    snapBehavior.damping = self.snapDamping;
     [self.dynamicAnimator addBehavior:snapBehavior];
 }
 
@@ -396,6 +434,10 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     NSLog(@"didPause");
     
     [self.dynamicAnimator removeAllBehaviors];
+    
+//    self.colorIndicatorView.hidden = YES;
+//    [self setAllButtonsHidden:YES onSide:PTSwipeCellSideLeft];
+//    [self setAllButtonsHidden:YES onSide:PTSwipeCellSideRight];
     
     if (self.draggingIndex != -1 && [self.delegate respondsToSelector:@selector(swipeCell:didFinishAnimatingFrom:onSide:)]) {
         [self.delegate swipeCell:self didFinishAnimatingFrom:self.draggingIndex onSide:self.revealedSide];
@@ -754,8 +796,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 - (PTSwipeCellButtonRevealState)restingButtonRevealStateForPanVelocityX:(CGFloat)panVelocityX {
     
     if (self.revealedSide == PTSwipeCellSideLeft) {
-        if (panVelocityX > 0.0) return PTSwipeCellButtonRevealStateExposed;
-        else if (panVelocityX < 0.0) return PTSwipeCellButtonRevealStateCovered;
+        if (panVelocityX > 0.1) return PTSwipeCellButtonRevealStateExposed;
+        else if (panVelocityX < -0.1) return PTSwipeCellButtonRevealStateCovered;
         else {
             CGFloat maxX = [self exposurePointXforSide:PTSwipeCellSideLeft];
             CGFloat currentX = CGRectGetMinX(self.contentView.frame);
@@ -763,8 +805,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         }
     }
     else if (self.revealedSide == PTSwipeCellSideRight) {
-        if (panVelocityX < 0.0) return PTSwipeCellButtonRevealStateExposed;
-        else if (panVelocityX > 0.0) return PTSwipeCellButtonRevealStateCovered;
+        if (panVelocityX < -0.1) return PTSwipeCellButtonRevealStateExposed;
+        else if (panVelocityX > 0.1) return PTSwipeCellButtonRevealStateCovered;
         else {
             CGFloat minX = [self exposurePointXforSide:PTSwipeCellSideRight];
             CGFloat tripPointX = CGRectGetWidth(self.colorIndicatorView.bounds) - minX / 2.0;

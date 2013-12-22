@@ -26,7 +26,7 @@
         [_dataSource addObject:[NSString stringWithFormat:@"Item %i", i]];
     }
     _dataSource = [NSMutableArray array];
-    [_dataSource addObjectsFromArray:@[@"Milk", @"Bread", @"Bananas", @"Apples", @"Orange Juice", @"Bacon"]];
+    [_dataSource addObjectsFromArray:@[@"Milk", @"Bread", @"Bananas", @"Apples", @"Orange Juice", @"Bacon", @"Turkey", @"Ham", @"London Broil", @"Cheese", @"Ice Cream", @"Tomatoes", @"Potatoes", @"Onions", @"Garlic"]];
     
     self.tableView.rowHeight = 64.5;
     self.tableView.separatorInset = UIEdgeInsetsZero;
@@ -49,6 +49,9 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     PTSwipeCell *cell = [tableView dequeueReusableCellWithIdentifier:PTSwipeCellId forIndexPath:indexPath];
+    
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
     cell.delegate = self;
     cell.leftSliderShouldSlide = NO;
     cell.rightSliderShouldSlide = YES;
@@ -59,10 +62,11 @@
     UIButton *deleteButton = [PTSwipeCell defaultButton];
     [deleteButton setTitle:@"Delete" forState:UIControlStateNormal];
     [deleteButton setBackgroundColor:[UIColor sevenRed]];
-    UIButton *moreButton = [PTSwipeCell defaultButton];
-    [moreButton setTitle:@"More" forState:UIControlStateNormal];
-    [moreButton setBackgroundColor:[UIColor sevenGroupedTableSeparatorLineGray]];
-    cell.rightButtons = @[deleteButton, moreButton];
+    cell.rightButtons = @[deleteButton];
+//    UIButton *moreButton = [PTSwipeCell defaultButton];
+//    [moreButton setTitle:@"More" forState:UIControlStateNormal];
+//    [moreButton setBackgroundColor:[UIColor sevenGroupedTableSeparatorLineGray]];
+//    cell.rightButtons = @[deleteButton, moreButton];
     
     cell.defaultColor = [UIColor sevenGroupedTableViewBackground];
     cell.contentView.backgroundColor = [UIColor whiteColor];
@@ -90,9 +94,18 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    
+    if (scrollView.dragging && scrollView.tracking) {
+        for (PTSwipeCell *visibleCell in self.tableView.visibleCells) {
+            [visibleCell animateToCoveredStateIfExposed];
+        }
+    }
+}
+
 //===============================================
 #pragma mark -
-#pragma mark UITableViewDataSource
+#pragma mark PTSwipeCellDelegate
 //===============================================
 
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side {
@@ -118,6 +131,16 @@
 
 - (void)swipeCell:(PTSwipeCell *)cell didFinishAnimatingFrom:(NSInteger)index onSide:(PTSwipeCellSide)side {
     NSLog(@"didFinishAnimatingFrom:%li onSide:%i", (long)index, side);
+}
+
+- (void)swipeCell:(PTSwipeCell *)cell buttonRevealStateDidChangeTo:(PTSwipeCellButtonRevealState)revealState {
+    NSLog(@"swipeCell:buttonRevealStateDidChangeTo:");
+    
+    for (PTSwipeCell *visibleCell in self.tableView.visibleCells) {
+        if (visibleCell != cell) {
+            [visibleCell animateToCoveredStateIfExposed];
+        }
+    }
 }
 
 @end

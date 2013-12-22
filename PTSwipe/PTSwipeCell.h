@@ -25,6 +25,12 @@ typedef NS_ENUM(NSInteger, PTSwipeCellConfiguration) {
     PTSwipeCellConfigurationNone
 };
 
+typedef NS_ENUM(NSInteger, PTSwipeCellButtonRevealState) {
+    PTSwipeCellButtonRevealStateLeftExposed,
+    PTSwipeCellButtonRevealStateRightExposed,
+    PTSwipeCellButtonRevealStateCovered,
+};
+
 extern NSString * const PTSwipeCellId;
 
 @protocol PTSwipeCellDelegate;
@@ -105,6 +111,8 @@ extern NSString * const PTSwipeCellId;
 
 + (UIButton *)defaultButton;
 
+- (void)animateToCoveredStateIfExposed;
+
 @end
 
 
@@ -113,4 +121,5 @@ extern NSString * const PTSwipeCellId;
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side;
 - (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side;
 - (void)swipeCell:(PTSwipeCell *)cell didFinishAnimatingFrom:(NSInteger)index onSide:(PTSwipeCellSide)side;
+- (void)swipeCell:(PTSwipeCell *)cell buttonRevealStateDidChangeTo:(PTSwipeCellButtonRevealState)revealState;
 @end

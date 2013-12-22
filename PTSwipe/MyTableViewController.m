@@ -14,6 +14,7 @@
 
 @interface MyTableViewController () <PTSwipeCellDelegate>
 @property (nonatomic, strong) NSMutableArray *dataSource;
+@property (nonatomic, strong) NSMutableArray *checked;
 @end
 
 @implementation MyTableViewController
@@ -21,12 +22,15 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _dataSource = [NSMutableArray array];
-    for (int i = 0; i < 30; i++) {
-        [_dataSource addObject:[NSString stringWithFormat:@"Item %i", i]];
-    }
+//    _dataSource = [NSMutableArray array];
+//    for (int i = 0; i < 30; i++) {
+//        [_dataSource addObject:[NSString stringWithFormat:@"Item %i", i]];
+//    }
     _dataSource = [NSMutableArray array];
     [_dataSource addObjectsFromArray:@[@"Milk", @"Bread", @"Bananas", @"Apples", @"Orange Juice", @"Bacon", @"Turkey", @"Ham", @"London Broil", @"Cheese", @"Ice Cream", @"Tomatoes", @"Potatoes", @"Onions", @"Garlic"]];
+    
+    _checked = [NSMutableArray array];
+    [_checked addObjectsFromArray:@[@NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO, @NO]];
     
     self.tableView.rowHeight = 64.5;
     self.tableView.separatorInset = UIEdgeInsetsZero;
@@ -94,6 +98,10 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    return nil;
+}
+
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     
     if (scrollView.dragging && scrollView.tracking) {
@@ -111,8 +119,16 @@
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side {
     NSLog(@"didSwipeTo:%li onSide:%li", (long)index, side);
     
-    if (side == PTSwipeCellSideLeft && index == 0) {
-        cell.contentView.backgroundColor = [UIColor sevenGroupedTableViewBackground];
+    NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
+    
+    BOOL objectIsChecked = self.checked[indexPath.row];
+    
+    BOOL showAsChecked = NO;
+    if (index == 0 && !objectIsChecked) showAsChecked = YES;
+    if (index == -1 && objectIsChecked) showAsChecked = YES;
+    
+    if (side == PTSwipeCellSideLeft && showAsChecked) {
+        cell.contentView.backgroundColor = [UIColor purpleColor];
     }
     else {
         cell.contentView.backgroundColor = [UIColor whiteColor];
@@ -120,21 +136,22 @@
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side {
-    NSLog(@"didReleaseAt:%li onSide:%li", (long)index, side);
+//    NSLog(@"didReleaseAt:%li onSide:%li", (long)index, side);
     
-//    if (side == PTSwipeCellSideLeft && index == 1) {
-//        NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
+    if (side == PTSwipeCellSideLeft && index == 1) {
+        NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
+        self.checked[indexPath.row] = [NSNumber numberWithBool:![self.checked[indexPath.row] boolValue]];
 //        [self.dataSource removeObjectAtIndex:indexPath.row];
 //        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationRight];
-//    }
+    }
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell didFinishAnimatingFrom:(NSInteger)index onSide:(PTSwipeCellSide)side {
-    NSLog(@"didFinishAnimatingFrom:%li onSide:%li", (long)index, side);
+//    NSLog(@"didFinishAnimatingFrom:%li onSide:%li", (long)index, side);
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell buttonRevealStateDidChangeTo:(PTSwipeCellButtonRevealState)revealState {
-    NSLog(@"swipeCell:buttonRevealStateDidChangeTo:");
+//    NSLog(@"swipeCell:buttonRevealStateDidChangeTo:");
     
     for (PTSwipeCell *visibleCell in self.tableView.visibleCells) {
         if (visibleCell != cell) {

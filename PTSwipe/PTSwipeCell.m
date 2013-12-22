@@ -65,7 +65,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         NSString *imageName = [self imageNameForIndex:imageIndex onSide:self.revealedSide];
         self.slidingImageView.image = imageName ? [UIImage imageNamed:imageName] : nil;
         
-        NSLog(@"setting image to %@", imageName);
+//        NSLog(@"setting image to %@", imageName);
     }
     _imageIndex = imageIndex;
 }
@@ -77,7 +77,7 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
         NSString *imageName = [self imageNameForIndex:self.imageIndex onSide:revealedSide];
         self.slidingImageView.image = imageName ? [UIImage imageNamed:imageName] : nil;
         
-        NSLog(@"setting image to %@", imageName);
+//        NSLog(@"setting image to %@", imageName);
     }
     _revealedSide = revealedSide;
     
@@ -212,17 +212,17 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 - (void)setHighlighted:(BOOL)highlighted {
     [super setHighlighted:highlighted];
     
-    self.colorIndicatorView.hidden = highlighted;
-    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
-    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
+//    self.colorIndicatorView.hidden = highlighted;
+//    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
+//    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
 }
 
 - (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {
     [super setHighlighted:highlighted animated:animated];
     
-    self.colorIndicatorView.hidden = highlighted;
-    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
-    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
+//    self.colorIndicatorView.hidden = highlighted;
+//    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideRight];
+//    [self setAllButtonsHidden:highlighted onSide:PTSwipeCellSideLeft];
 }
 
 - (void)setSelected:(BOOL)selected {

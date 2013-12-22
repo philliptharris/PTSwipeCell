@@ -109,7 +109,7 @@
 //===============================================
 
 - (void)swipeCell:(PTSwipeCell *)cell didSwipeTo:(NSInteger)index onSide:(PTSwipeCellSide)side {
-    NSLog(@"didSwipeTo:%li onSide:%i", (long)index, side);
+    NSLog(@"didSwipeTo:%li onSide:%li", (long)index, side);
     
     if (side == PTSwipeCellSideLeft && index == 0) {
         cell.contentView.backgroundColor = [UIColor sevenGroupedTableViewBackground];
@@ -120,7 +120,7 @@
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell didReleaseAt:(NSInteger)index onSide:(PTSwipeCellSide)side {
-    NSLog(@"didReleaseAt:%li onSide:%i", (long)index, side);
+    NSLog(@"didReleaseAt:%li onSide:%li", (long)index, side);
     
 //    if (side == PTSwipeCellSideLeft && index == 1) {
 //        NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
@@ -130,7 +130,7 @@
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell didFinishAnimatingFrom:(NSInteger)index onSide:(PTSwipeCellSide)side {
-    NSLog(@"didFinishAnimatingFrom:%li onSide:%i", (long)index, side);
+    NSLog(@"didFinishAnimatingFrom:%li onSide:%li", (long)index, side);
 }
 
 - (void)swipeCell:(PTSwipeCell *)cell buttonRevealStateDidChangeTo:(PTSwipeCellButtonRevealState)revealState {

@@ -192,6 +192,8 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
     
 //    _slidingImageView.layer.borderColor = [UIColor blackColor].CGColor;
 //    _slidingImageView.layer.borderWidth = 1.0;
+    
+//    [self.contentView addObserver:self forKeyPath:@"center" options:NSKeyValueObservingOptionNew context:NULL];
 }
 
 + (UIButton *)defaultButton {
@@ -875,12 +877,12 @@ const CGFloat MSPaneViewVelocityMultiplier = 1.0;
 #pragma mark NSKeyValueObserving
 //===============================================
 //
-// I tried using KeyValueObserving to get callbacks on the contentView's position as it is being animated by UIKit Dynamics, but that doesn't happen.
+// I tried using KeyValueObserving to get callbacks on the contentView's frame as it is being animated by UIKit Dynamics, but that doesn't happen. FOUND THE PROBLEM!. The dynamic animator animates the bounds, center, and transform of the UIDynamicItem, not the frame. So we need to observe "center" rather than "frame" to see the updates happen in real-time as the item animates.
 //
 //- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
 //    
-//    if([keyPath isEqualToString:@"frame"] && (object == self.contentView)) {
-//        if([object valueForKeyPath:keyPath] != [NSNull null]) {
+//    if ([keyPath isEqualToString:@"center"] && (object == self.contentView)) {
+//        if ([object valueForKeyPath:keyPath] != [NSNull null]) {
 //            [self contentViewDidUpdateFrame];
 //        }
 //    }
